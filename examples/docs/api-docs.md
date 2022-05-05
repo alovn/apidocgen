@@ -2,16 +2,10 @@
 
 greeter接口文档
 
-## Apis
+## apis
 
-### 测试接口
-
-```text
-GET /greeter
-```
-
-### 测试接口2
+### 测试接口4
 
 ```text
-GET /greeter2
+GET http://bytego.dev/admin/other
 ```

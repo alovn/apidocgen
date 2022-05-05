@@ -1,6 +1,7 @@
 package apidoc
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -16,6 +17,7 @@ import (
 const (
 	apiAttr         = "@api"
 	titleAttr       = "@title"
+	groupAttr       = "@group"
 	versionAttr     = "@version"
 	descriptionAttr = "@desc"
 	successAttr     = "@success"
@@ -26,8 +28,7 @@ const (
 	authorAttr      = "@author"
 
 	//doc
-	hostAttr     = "@host"
-	basePathAttr = "@basepath"
+	baseURLAttr = "@baseurl"
 )
 
 var allMethod = map[string]struct{}{
@@ -42,6 +43,7 @@ var allMethod = map[string]struct{}{
 
 type Parser struct {
 	doc      *ApiDocSpec
+	groups   map[string]*ApiGroupSpec
 	packages *PackagesDefinitions
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]struct{}
@@ -50,6 +52,7 @@ type Parser struct {
 func New() *Parser {
 	return &Parser{
 		doc:      &ApiDocSpec{},
+		groups:   make(map[string]*ApiGroupSpec),
 		packages: NewPackagesDefinitions(),
 		excludes: make(map[string]struct{}),
 	}
@@ -102,13 +105,18 @@ func (parser *Parser) parseApiDocInfo(mainPath string) error {
 		if !isApiDocComment(comments) {
 			continue
 		}
+		if isApiGroupComment(comments) {
+			if err := parser.parseApiGroupInfo(comments); err != nil {
+				return err
+			}
+			continue
+		}
 
 		err = parseApiDocInfo(parser, comments)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -126,10 +134,63 @@ func (parser *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 					return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
 				}
 			}
-			parser.doc.Apis = append(parser.doc.Apis, operation.ApiSpec)
+			if operation.ApiSpec.Group == "" {
+				parser.doc.Apis = append(parser.doc.Apis, &operation.ApiSpec)
+			} else {
+				if g, ok := parser.groups[operation.ApiSpec.Group]; ok {
+					g.Apis = append(g.Apis, &operation.ApiSpec)
+				} else {
+					group := ApiGroupSpec{
+						Group:       operation.ApiSpec.Group,
+						Title:       operation.ApiSpec.Group,
+						Description: "",
+					}
+					group.Apis = append(group.Apis, &operation.ApiSpec)
+					parser.groups[operation.ApiSpec.Group] = &group
+					parser.doc.Groups = append(parser.doc.Groups, &group)
+				}
+			}
 		}
 	}
 
+	return nil
+}
+
+func (parser *Parser) parseApiGroupInfo(comments []string) error {
+	previousAttribute := ""
+	var group ApiGroupSpec
+	for line := 0; line < len(comments); line++ {
+		commentLine := comments[line]
+		attribute := strings.Split(commentLine, " ")[0]
+		value := strings.TrimSpace(commentLine[len(attribute):])
+		multilineBlock := false
+		if previousAttribute == attribute {
+			multilineBlock = true
+		}
+		switch strings.ToLower(attribute) {
+		case groupAttr:
+			group.Group = strings.ToLower(value)
+		case titleAttr:
+			group.Title = value
+		case descriptionAttr:
+			if multilineBlock {
+				group.Description += "\n" + value
+				continue
+			}
+			group.Description = value
+		}
+	}
+	if group.Group == "" {
+		return errors.New("error: group ")
+	}
+	if g, ok := parser.groups[group.Group]; ok {
+		g.Group = group.Group
+		g.Title = group.Title
+		g.Description = group.Description
+	} else {
+		parser.groups[group.Group] = &group
+		parser.doc.Groups = append(parser.doc.Groups, &group)
+	}
 	return nil
 }
 
@@ -154,10 +215,8 @@ func parseApiDocInfo(parser *Parser, comments []string) error {
 				continue
 			}
 			parser.doc.Description = value
-		case basePathAttr:
-			parser.doc.BasePath = value
-		case hostAttr:
-			parser.doc.Host = value
+		case baseURLAttr:
+			parser.doc.BaseURL = value
 		}
 	}
 	return nil
@@ -173,6 +232,19 @@ func isApiDocComment(comments []string) bool {
 	}
 
 	return true
+}
+
+func isApiGroupComment(comments []string) bool {
+	for _, commentLine := range comments {
+		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
+		switch attribute {
+		case apiAttr, successAttr, failureAttr, responseAttr:
+			return false
+		case groupAttr:
+			return true
+		}
+	}
+	return false
 }
 
 func getPkgName(searchDir string) (string, error) {

@@ -45,6 +45,8 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		operation.Title = lineRemainder
 	case authorAttr:
 		operation.Author = lineRemainder
+	case groupAttr:
+		operation.Group = lineRemainder
 	case descriptionAttr:
 		operation.ParseDescriptionComment(lineRemainder)
 	case tagsAttr:
@@ -92,5 +94,6 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 
 	operation.HTTPMethod = httpMethod
 	operation.Api = matches[2]
+	operation.FullURL = fmt.Sprintf("%s/%s", strings.TrimSuffix(operation.parser.doc.BaseURL, "/"), strings.TrimPrefix(operation.Api, "/"))
 	return nil
 }

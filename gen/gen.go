@@ -2,6 +2,7 @@ package gen
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -10,43 +11,102 @@ import (
 )
 
 type Gen struct {
+	c *Config
 }
 
-func New() *Gen {
-	return &Gen{}
+func New(c *Config) *Gen {
+	return &Gen{
+		c: c,
+	}
 }
 
 type Config struct {
-	SearchDir    string
-	OutputDir    string
-	TemplateFile string
-	MainFile     string
+	SearchDir      string
+	OutputDir      string
+	TemplateFile   string
+	MainFile       string
+	IsGenGroupFile bool
 }
 
-func (g *Gen) Build(c *Config) error {
-	if c == nil {
+func (g *Gen) Build() error {
+	if g.c == nil {
 		return errors.New("error config")
 	}
 	p := apidoc.New()
-	if err := p.Parse(c.SearchDir, c.MainFile); err != nil {
+	if err := p.Parse(g.c.SearchDir, g.c.MainFile); err != nil {
 		return err
 	}
 	doc := p.GetApiDoc()
-	if err := os.MkdirAll(c.OutputDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(g.c.OutputDir, os.ModePerm); err != nil {
 		return err
 	}
-	_ = doc
 
-	t := template.New("docs")
-	t, err := t.Parse(defaultTemplate)
+	if g.c.IsGenGroupFile {
+		funcMap := template.FuncMap{
+			"add": func(a, b int) int {
+				return a + b
+			},
+		}
+		if len(doc.Apis) > 0 {
+			doc.Groups = append(doc.Groups, &apidoc.ApiGroupSpec{
+				Group:       "ungrouped",
+				Title:       "ungrouped apis",
+				Description: "Ungrouped apis",
+				Apis:        doc.Apis,
+			})
+		}
+		//group
+		t := template.New("group").Funcs(funcMap)
+		t, err := t.Parse(groupApisTemplate)
+		if err != nil {
+			return err
+		}
+		for _, v := range doc.Groups {
+			group := v
+			fileName := fmt.Sprintf("apis-%s.md", group.Group)
+			f, err := os.Create(filepath.Join(g.c.OutputDir, fileName))
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+			if err = t.Execute(f, group); err != nil {
+				return err
+			}
+			fmt.Println("generated:", fileName)
+		}
+
+		//readme
+		t = template.New("apis").Funcs(funcMap)
+		t, err = t.Parse(groupReadmeTemplate)
+		if err != nil {
+			return err
+		}
+		f, err := os.Create(filepath.Join(g.c.OutputDir, "README.md"))
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		if err = t.Execute(f, doc); err != nil {
+			return err
+		}
+		fmt.Println("generated: README.md")
+
+		return nil
+	}
+
+	t := template.New("apis-single")
+	t, err := t.Parse(singleApisTemplate)
 	if err != nil {
 		return err
 	}
-	f, err := os.Create(filepath.Join(c.OutputDir, "api-docs.md"))
+	f, err := os.Create(filepath.Join(g.c.OutputDir, "README.md"))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
+	for _, g := range doc.Groups {
+		doc.Apis = append(g.Apis, doc.Apis...)
+	}
 	if err = t.Execute(f, doc); err != nil {
 		return err
 	}

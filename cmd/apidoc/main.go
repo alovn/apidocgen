@@ -7,12 +7,13 @@ import (
 )
 
 func main() {
-	g := gen.New()
-	if err := g.Build(&gen.Config{
+	g := gen.New(&gen.Config{
 		SearchDir: "./examples",
 		MainFile:  "main.go",
 		OutputDir: "./examples/docs",
-	}); err != nil {
+		// IsGenGroupFile: true,
+	})
+	if err := g.Build(); err != nil {
 		log.Fatal(err)
 	}
 }
