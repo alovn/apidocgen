@@ -2,34 +2,10 @@
 
 greeter接口文档
 
-## apis
+## groups
 
-### 测试hello
+[1. greeter分组](apis-greeter.md)
 
-```text
-GET http://bytego.dev/admin/hello
-```
+[2. hello](apis-hello.md)
 
-### 测试hello2
-
-```text
-GET http://bytego.dev/admin/hello2
-```
-
-### 测试greeter
-
-```text
-GET http://bytego.dev/admin/greeter
-```
-
-### 测试greeter2
-
-```text
-GET http://bytego.dev/admin/greeter2
-```
-
-### 测试other
-
-```text
-GET http://bytego.dev/admin/other
-```
+[3. ungrouped apis](apis-ungrouped.md)

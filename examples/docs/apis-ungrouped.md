@@ -4,8 +4,10 @@ Ungrouped apis
 
 ## Apis
 
-### 测试接口4
+### 测试other
 
 ```text
 GET /other
 ```
+
+

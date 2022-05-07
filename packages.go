@@ -2,9 +2,14 @@ package apidoc
 
 import (
 	"go/ast"
+	goparser "go/parser"
+	"go/token"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"golang.org/x/tools/go/loader"
 )
 
 type PackagesDefinitions struct {
@@ -103,4 +108,229 @@ func rangeFiles(files map[*ast.File]*AstFileInfo, handle func(filename string, f
 	}
 
 	return nil
+}
+
+// findPackagePathFromImports finds out the package path of a package via ranging imports of an ast.File
+// @pkg the name of the target package
+// @file current ast.File in which to search imports
+// @fuzzy search for the package path that the last part matches the @pkg if true
+// @return the package path of a package of @pkg.
+func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *ast.File, fuzzy bool) string {
+	if file == nil {
+		return ""
+	}
+
+	if strings.ContainsRune(pkg, '.') {
+		pkg = strings.Split(pkg, ".")[0]
+	}
+
+	hasAnonymousPkg := false
+
+	matchLastPathPart := func(pkgPath string) bool {
+		paths := strings.Split(pkgPath, "/")
+
+		return paths[len(paths)-1] == pkg
+	}
+
+	// prior to match named package
+	for _, imp := range file.Imports {
+		if imp.Name != nil {
+			if imp.Name.Name == pkg {
+				return strings.Trim(imp.Path.Value, `"`)
+			}
+
+			if imp.Name.Name == "_" {
+				hasAnonymousPkg = true
+			}
+
+			continue
+		}
+
+		if pkgDefs.packages != nil {
+			path := strings.Trim(imp.Path.Value, `"`)
+			if fuzzy {
+				if matchLastPathPart(path) {
+					return path
+				}
+
+				continue
+			}
+
+			pd, ok := pkgDefs.packages[path]
+			if ok && pd.Name == pkg {
+				return path
+			}
+		}
+	}
+
+	// match unnamed package
+	if hasAnonymousPkg && pkgDefs.packages != nil {
+		for _, imp := range file.Imports {
+			if imp.Name == nil {
+				continue
+			}
+			if imp.Name.Name == "_" {
+				path := strings.Trim(imp.Path.Value, `"`)
+				if fuzzy {
+					if matchLastPathPart(path) {
+						return path
+					}
+				} else if pd, ok := pkgDefs.packages[path]; ok && pd.Name == pkg {
+					return path
+				}
+			}
+		}
+	}
+
+	return ""
+}
+
+// FindTypeSpec finds out TypeSpecDef of a type by typeName
+// @typeName the name of the target type, if it starts with a package name, find its own package path from imports on top of @file
+// @file the ast.file in which @typeName is used
+// @pkgPath the package path of @file.
+func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File, parseDependency bool) *TypeSpecDef {
+	if IsGolangPrimitiveType(typeName) {
+		return nil
+	}
+
+	if file == nil { // for test
+		return pkgDefs.uniqueDefinitions[typeName]
+	}
+
+	parts := strings.Split(typeName, ".")
+	if len(parts) > 1 {
+		isAliasPkgName := func(file *ast.File, pkgName string) bool {
+			if file != nil && file.Imports != nil {
+				for _, pkg := range file.Imports {
+					if pkg.Name != nil && pkg.Name.Name == pkgName {
+						return true
+					}
+				}
+			}
+
+			return false
+		}
+
+		if !isAliasPkgName(file, parts[0]) {
+			typeDef, ok := pkgDefs.uniqueDefinitions[typeName]
+			if ok {
+				return typeDef
+			}
+		}
+
+		pkgPath := pkgDefs.findPackagePathFromImports(parts[0], file, false)
+		if len(pkgPath) == 0 {
+			// check if the current package
+			if parts[0] == file.Name.Name {
+				pkgPath = pkgDefs.files[file].PackagePath
+			} else if parseDependency {
+				// take it as an external package, needs to be loaded
+				if pkgPath = pkgDefs.findPackagePathFromImports(parts[0], file, true); len(pkgPath) > 0 {
+					if err := pkgDefs.loadExternalPackage(pkgPath); err != nil {
+						return nil
+					}
+				}
+			}
+		}
+
+		return pkgDefs.findTypeSpec(pkgPath, parts[1])
+	}
+
+	typeDef, ok := pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, typeName)]
+	if ok {
+		return typeDef
+	}
+
+	typeDef = pkgDefs.findTypeSpec(pkgDefs.files[file].PackagePath, typeName)
+	if typeDef != nil {
+		return typeDef
+	}
+
+	for _, imp := range file.Imports {
+		if imp.Name != nil && imp.Name.Name == "." {
+			typeDef := pkgDefs.findTypeSpec(strings.Trim(imp.Path.Value, `"`), typeName)
+			if typeDef != nil {
+				return typeDef
+			}
+		}
+	}
+
+	return nil
+}
+
+func (pkgDefs *PackagesDefinitions) loadExternalPackage(importPath string) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	conf := loader.Config{
+		ParserMode: goparser.ParseComments,
+		Cwd:        cwd,
+	}
+
+	conf.Import(importPath)
+
+	loaderProgram, err := conf.Load()
+	if err != nil {
+		return err
+	}
+
+	for _, info := range loaderProgram.AllPackages {
+		pkgPath := strings.TrimPrefix(info.Pkg.Path(), "vendor/")
+		for _, astFile := range info.Files {
+			pkgDefs.parseTypesFromFile(astFile, pkgPath)
+		}
+	}
+
+	return nil
+}
+
+func (pkgDefs *PackagesDefinitions) ParseTypes() error {
+	for astFile, info := range pkgDefs.files {
+		pkgDefs.parseTypesFromFile(astFile, info.PackagePath)
+	}
+	return nil
+}
+
+func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packagePath string) {
+	for _, astDeclaration := range astFile.Decls {
+		if generalDeclaration, ok := astDeclaration.(*ast.GenDecl); ok && generalDeclaration.Tok == token.TYPE {
+			for _, astSpec := range generalDeclaration.Specs {
+				if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
+					typeSpecDef := &TypeSpecDef{
+						PkgPath:  packagePath,
+						File:     astFile,
+						TypeSpec: typeSpec,
+					}
+
+					if pkgDefs.uniqueDefinitions == nil {
+						pkgDefs.uniqueDefinitions = make(map[string]*TypeSpecDef)
+					}
+
+					fullName := typeSpecDef.FullName()
+					anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
+					if ok {
+						if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
+							continue
+						} else {
+							delete(pkgDefs.uniqueDefinitions, fullName)
+						}
+					} else {
+						pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
+					}
+
+					if pkgDefs.packages[typeSpecDef.PkgPath] == nil {
+						pkgDefs.packages[typeSpecDef.PkgPath] = &PackageDefinitions{
+							Name:            astFile.Name.Name,
+							TypeDefinitions: map[string]*TypeSpecDef{typeSpecDef.Name(): typeSpecDef},
+						}
+					} else if _, ok = pkgDefs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()]; !ok {
+						pkgDefs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()] = typeSpecDef
+					}
+				}
+			}
+		}
+	}
 }

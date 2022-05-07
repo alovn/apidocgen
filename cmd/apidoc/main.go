@@ -8,10 +8,10 @@ import (
 
 func main() {
 	g := gen.New(&gen.Config{
-		SearchDir: "./examples",
-		MainFile:  "main.go",
-		OutputDir: "./examples/docs",
-		// IsGenGroupFile: true,
+		SearchDir:      "../../examples",
+		MainFile:       "main.go",
+		OutputDir:      "../../examples/docs",
+		IsGenGroupFile: true,
 	})
 	if err := g.Build(); err != nil {
 		log.Fatal(err)

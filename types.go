@@ -1,6 +1,8 @@
 package apidoc
 
-import "go/ast"
+import (
+	"go/ast"
+)
 
 // TypeSpecDef the whole information of a typeSpec.
 type TypeSpecDef struct {

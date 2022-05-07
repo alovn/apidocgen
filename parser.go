@@ -20,6 +20,7 @@ const (
 	groupAttr       = "@group"
 	versionAttr     = "@version"
 	descriptionAttr = "@desc"
+	acceptAttr      = "@accept"
 	successAttr     = "@success"
 	failureAttr     = "@failure"
 	responseAttr    = "@response"
@@ -47,6 +48,8 @@ type Parser struct {
 	packages *PackagesDefinitions
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]struct{}
+	// structStack stores full names of the structures that were already parsed or are being parsed now
+	structStack []*TypeSpecDef
 }
 
 func New() *Parser {
@@ -83,6 +86,9 @@ func (parser *Parser) Parse(searchDir string, mainFile string) error {
 		return err
 	}
 	if err = parser.parseApiDocInfo(mainPath); err != nil {
+		return err
+	}
+	if err = parser.packages.ParseTypes(); err != nil {
 		return err
 	}
 	if err = rangeFiles(parser.packages.files, parser.parseApiInfos); err != nil {
@@ -343,4 +349,292 @@ func fullTypeName(pkgName, typeName string) string {
 	}
 
 	return typeName
+}
+
+func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.Field, ref bool) (*TypeSchema, error) {
+	if IsGolangPrimitiveType(typeName) {
+		name := field.Names[0].Name
+		fieldName := getFieldName(name, field, "json")
+		return &TypeSchema{
+			Name:      name,
+			FieldName: fieldName,
+			Comment:   field.Comment.Text(),
+			Type:      typeName,
+			Example:   getExampleValue(typeName, field),
+		}, nil
+	}
+
+	typeSpecDef := parser.packages.FindTypeSpec(typeName, file, true)
+	if typeSpecDef == nil {
+		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
+	}
+	fmt.Println("typeSpecDef", typeSpecDef.Name())
+
+	schema, err := parser.ParseDefinition(typeSpecDef)
+	if err != nil {
+		return nil, err
+	}
+
+	// if ref && len(schema.Type) > 0 && schema.Type[0] == OBJECT {
+	// 	return parser.getRefTypeSchema(typeSpecDef, schema), nil
+	// }
+
+	return schema, nil
+}
+
+func (parser *Parser) isInStructStack(typeSpecDef *TypeSpecDef) bool {
+	for _, specDef := range parser.structStack {
+		if typeSpecDef == specDef {
+			return true
+		}
+	}
+
+	return false
+}
+
+// ParseDefinition parses given type spec that corresponds to the type under
+// given name and package
+func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*TypeSchema, error) {
+	typeName := typeSpecDef.FullName()
+	refTypeName := TypeDocName(typeName, typeSpecDef.TypeSpec)
+
+	if parser.isInStructStack(typeSpecDef) {
+		fmt.Printf("Skipping '%s', recursion detected.", typeName)
+		return &TypeSchema{
+			Name:    refTypeName,
+			Type:    OBJECT,
+			PkgPath: typeSpecDef.PkgPath,
+		}, nil
+	}
+
+	parser.structStack = append(parser.structStack, typeSpecDef)
+
+	fmt.Printf("Generating %s\n", typeName)
+
+	switch expr := typeSpecDef.TypeSpec.Type.(type) {
+	// type Foo struct {...}
+	case *ast.StructType:
+		return parser.parseStruct(typeSpecDef.File, expr.Fields)
+	default:
+		fmt.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeSpecDef.TypeSpec.Type)
+	}
+
+	sch := TypeSchema{
+		Name:    refTypeName,
+		Type:    OBJECT,
+		PkgPath: typeSpecDef.PkgPath,
+	}
+
+	return &sch, nil
+}
+
+func (parser *Parser) parseTypeExpr(file *ast.File, field *ast.Field, typeExpr ast.Expr, ref bool) (*TypeSchema, error) {
+	switch expr := typeExpr.(type) {
+	// type Foo interface{}
+	case *ast.InterfaceType:
+		return &TypeSchema{}, nil
+
+	// type Foo struct {...}
+	case *ast.StructType:
+		return parser.parseStruct(file, expr.Fields)
+
+	// type Foo Baz
+	case *ast.Ident:
+		return parser.getTypeSchema(expr.Name, file, field, ref)
+
+	// type Foo *Baz
+	case *ast.StarExpr:
+		return parser.parseTypeExpr(file, field, expr.X, ref)
+
+	// type Foo pkg.Bar
+	case *ast.SelectorExpr:
+		if xIdent, ok := expr.X.(*ast.Ident); ok {
+			return parser.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), file, field, ref)
+		}
+	// type Foo []Baz
+	case *ast.ArrayType:
+		itemSchema, err := parser.parseTypeExpr(file, field, expr.Elt, true)
+		if err != nil {
+			return nil, err
+		}
+		return &TypeSchema{Type: "array", ArraySchema: itemSchema}, nil
+	// type Foo map[string]Bar
+	// case *ast.MapType:
+	// 	if _, ok := expr.Value.(*ast.InterfaceType); ok {
+	// 		return &TypeSchema{Type: OBJECT, Properties: nil}, nil
+	// 	}
+	// 	schema, err := parser.parseTypeExpr(file, expr.Value, true)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	return spec.MapProperty(schema), nil
+
+	// case *ast.FuncType:
+	// 	return nil, ErrFuncTypeField
+	// ...
+	default:
+		fmt.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
+	}
+
+	return &TypeSchema{Type: OBJECT}, nil
+}
+
+func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*TypeSchema, error) {
+	properties := make(map[string]*TypeSchema)
+
+	for _, field := range fields.List {
+		if len(field.Names) != 1 {
+			return nil, errors.New("error len(field.Names) != 1")
+		}
+		// name := field.Names[0].Name
+		schema, err := parser.parseStructField(file, field)
+		if err != nil {
+			return nil, err
+		}
+		properties[schema.FieldName] = schema
+
+		// name := field.Names[0]
+		// key := name.Name
+		// fmt.Printf("%s %v\n\n\n", name, name.Obj.Decl)
+		// if field.Tag != nil && field.Tag.Value != "" {
+		// 	tag := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", ""))
+		// 	if j, ok := tag.Lookup("json"); ok && j != "" { //xx,omitempty
+		// 		key = strings.Split(j, ",")[0]
+		// 	}
+		// }
+		// fmt.Println(key)
+
+		// example, ok := tag.Lookup("example")
+		// if ok {
+		// 	m[fieldKey] = example
+		// }
+		// fmt.Println("field", field)
+	}
+	return &TypeSchema{
+		Name:       file.Name.Name,
+		Type:       OBJECT,
+		Properties: properties,
+	}, nil
+}
+
+func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (*TypeSchema, error) {
+	name := field.Names[0].Name
+	if !ast.IsExported(name) {
+		return nil, nil
+	}
+
+	typeName, err := getFieldType(field.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	schema, err := parser.getTypeSchema(typeName, file, field, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return schema, nil
+
+	// if field.Names == nil {
+	// 	typeName, err := getFieldType(field.Type)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	schema, err := parser.getTypeSchema(typeName, file, false)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	if len(schema.Type) > 0 && schema.Type == OBJECT {
+	// 		if len(schema.Properties) == 0 {
+	// 			return nil, nil
+	// 		}
+
+	// 		properties := map[string]*TypeSchema{}
+	// 		for k, v := range schema.Properties {
+	// 			properties[k] = v
+	// 		}
+
+	// 		return properties, nil
+	// 	}
+
+	// 	// for alias type of non-struct types ,such as array,map, etc. ignore field tag.
+	// 	// return map[string]*TypeSchema{Type: typeName}, nil, nil
+	// }
+
+	// ps := parser.fieldParserFactory(parser, field)
+
+	// if ps.ShouldSkip() {
+	// 	return nil, nil, nil
+	// }
+
+	// fieldName, err := ps.FieldName()
+	// if err != nil {
+	// 	return nil, nil, err
+	// }
+
+	// schema, err := ps.CustomSchema()
+	// if err != nil {
+	// 	return nil, nil, err
+	// }
+
+	// if schema == nil {
+	// 	typeName, err := getFieldType(field.Type)
+	// 	if err == nil {
+	// 		// named type
+	// 		schema, err = parser.getTypeSchema(typeName, file, true)
+	// 	} else {
+	// 		// unnamed type
+	// 		schema, err = parser.parseTypeExpr(file, field.Type, false)
+	// 	}
+
+	// 	if err != nil {
+	// 		return nil, nil, err
+	// 	}
+	// }
+
+	// err = ps.ComplementSchema(schema)
+	// if err != nil {
+	// 	return nil, nil, err
+	// }
+
+	// var tagRequired []string
+
+	// required, err := ps.IsRequired()
+	// if err != nil {
+	// 	return nil, nil, err
+	// }
+
+	// if required {
+	// 	tagRequired = append(tagRequired, fieldName)
+	// }
+
+	// return map[string]*TypeSchema{fieldName: *schema}, tagRequired, nil
+}
+
+func getFieldType(field ast.Expr) (string, error) {
+	switch fieldType := field.(type) {
+	case *ast.Ident:
+		return fieldType.Name, nil
+	case *ast.SelectorExpr:
+		packageName, err := getFieldType(fieldType.X)
+		if err != nil {
+			return "", err
+		}
+
+		return fullTypeName(packageName, fieldType.Sel.Name), nil
+	case *ast.StarExpr:
+		fullName, err := getFieldType(fieldType.X)
+		if err != nil {
+			return "", err
+		}
+
+		return fullName, nil
+	case *ast.InterfaceType:
+		return ANY, nil
+	default:
+		return "", fmt.Errorf("unknown field type %#v", field)
+	}
 }
