@@ -60,6 +60,7 @@ type TypeSchema struct {
 	Required    bool
 	Comment     string
 	Example     string //example value
+	IsArray     bool
 	ArraySchema *TypeSchema
 	Properties  map[string]*TypeSchema //object
 	IsOmitempty bool
@@ -116,15 +117,13 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 		}
 		sb.WriteString(prefix + "}")
 
-	} else if s.Type == "array" && s.ArraySchema != nil {
+	} else if s.IsArray && s.Type == ARRAY && s.ArraySchema != nil {
 		if isNewLine {
 			sb.WriteString(prefix + "[")
 		} else {
 			sb.WriteString("[")
 		}
-		if s.Comment != "" {
-			sb.WriteString(fmt.Sprintf("  // %s", buildComment(*s)))
-		}
+		sb.WriteString(fmt.Sprintf("  // %s", buildComment(*s)))
 		sb.WriteString("\n")
 		s.ArraySchema.parseJSON(depth+1, sb, true)
 		sb.WriteString("\n")
@@ -140,7 +139,16 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 }
 
 func buildComment(v TypeSchema) string {
-	s := v.Type
+	s := ""
+	if v.IsArray {
+		arrayName := v.ArraySchema.Type //int
+		if v.ArraySchema.Type == OBJECT {
+			arrayName = v.ArraySchema.Name
+		}
+		s += fmt.Sprintf("%s(%s), ", ARRAY, arrayName)
+	} else {
+		s += v.Type
+	}
 	if v.Required {
 		s += ", required"
 	}

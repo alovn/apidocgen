@@ -28,11 +28,13 @@ type TestData2 struct {
 	MyAge2   int
 }
 type TestData struct { //测试数据
-	MyTitle   string    `json:"my_title,omitempty"` //标题
-	Data2     TestData2 `json:"data2,omitempty"`
-	MyIntData int
-	MyFloat64 float64
-	MyFloat32 float32
+	MyTitle string `json:"my_title,omitempty"` //标题
+	// Data2      *TestData2 `json:"data2,omitempty"`
+	// MyIntData  int
+	// MyFloat64  float64
+	// MyFloat32  float32
+	MyIntArray       []int
+	MyTestData2Array []TestData2
 }
 
 type Request struct {
@@ -48,8 +50,8 @@ type Request struct {
 //@accept json
 //@request Request
 //@response 200 Response{data=TestData} 输出对象 dd
-//@response 500 Response{code=10010,msg="异常"} 出错了
-//@response 500 int 错误
+//@response1 500 Response{code=10010,msg="异常"} 出错了
+//@response1 500 int 错误
 func greet() {
 	var msg = "Hello World!"
 	fmt.Println(msg)

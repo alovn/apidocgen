@@ -20,36 +20,19 @@ GET /greeter
 {
   "code": 0,  // int, 返回状态码
   "data": {
-    "MyFloat32": 1.23,  // float32
-    "MyFloat64": 1.23,  // float64
-    "MyIntData": 0,  // int
-    "data2": {
-      "MyAge2": 0,  // int
-      "MyTitle2": "example"  // string, 标题2
-    },
+    "MyIntArray": [  // array(int), 
+      0
+    ],
+    "MyTestData2Array": [  // array(main.TestData2), 
+      {
+        "MyAge2": 0,  // int
+        "MyTitle2": "example"  // string, 标题2
+      }
+    ],
     "my_title": "example"  // string, 标题
   },
   "msg": "返回消息"  // string, 返回文本消息
 }
-```
-
-```json
-
-// 出错了
-// StatusCode: 500
-// object main.Response 
-{
-  "code": 10010,  // int, 返回状态码
-  "msg": "异常",  // string, 返回文本消息
-}
-```
-
-```json
-
-// 错误
-// StatusCode: 500
-// integer int 
-0
 ```
 
 ### 测试greeter2
@@ -66,13 +49,15 @@ GET /greeter2
 // StatusCode: 200
 // object main.TestData 
 {
-  "MyFloat32": 1.23,  // float32
-  "MyFloat64": 1.23,  // float64
-  "MyIntData": 0,  // int
-  "data2": {
-    "MyAge2": 0,  // int
-    "MyTitle2": "example"  // string, 标题2
-  },
+  "MyIntArray": [  // array(int), 
+    0
+  ],
+  "MyTestData2Array": [  // array(main.TestData2), 
+    {
+      "MyAge2": 0,  // int
+      "MyTitle2": "example"  // string, 标题2
+    }
+  ],
   "my_title": "example"  // string, 标题
 }
 ```

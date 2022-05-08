@@ -520,17 +520,28 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (*TypeS
 		return nil, nil
 	}
 
-	typeName, err := getFieldType(field.Type)
+	isArray, typeName, err := getFieldType(field.Type)
 	if err != nil {
 		return nil, err
 	}
-
-	schema, err := parser.getTypeSchema(typeName, file, field, false)
-	if err != nil {
-		return nil, err
+	if isArray {
+		schema, err := parser.getTypeSchema(typeName, file, field, false)
+		if err != nil {
+			return nil, err
+		}
+		return &TypeSchema{
+			IsArray:     isArray,
+			Type:        ARRAY,
+			ArraySchema: schema,
+		}, nil
+		// return schema, nil
+	} else {
+		schema, err := parser.getTypeSchema(typeName, file, field, false)
+		if err != nil {
+			return nil, err
+		}
+		return schema, nil
 	}
-
-	return schema, nil
 
 	// if field.Names == nil {
 	// 	typeName, err := getFieldType(field.Type)
@@ -610,27 +621,36 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (*TypeS
 	// return map[string]*TypeSchema{fieldName: *schema}, tagRequired, nil
 }
 
-func getFieldType(field ast.Expr) (string, error) {
+func getFieldType(field ast.Expr) (isArray bool, typeName string, err error) {
 	switch fieldType := field.(type) {
 	case *ast.Ident:
-		return fieldType.Name, nil
+		return false, fieldType.Name, nil
 	case *ast.SelectorExpr:
-		packageName, err := getFieldType(fieldType.X)
+		isArray, packageName, err := getFieldType(fieldType.X)
 		if err != nil {
-			return "", err
+			return false, "", err
 		}
 
-		return fullTypeName(packageName, fieldType.Sel.Name), nil
+		return isArray, fullTypeName(packageName, fieldType.Sel.Name), nil
 	case *ast.StarExpr:
-		fullName, err := getFieldType(fieldType.X)
+		isArray, fullName, err := getFieldType(fieldType.X)
 		if err != nil {
-			return "", err
+			return false, "", err
 		}
 
-		return fullName, nil
+		return isArray, fullName, nil
 	case *ast.InterfaceType:
-		return ANY, nil
+		return false, ANY, nil
+	case *ast.ArrayType:
+		isArray, arrayType, err := getFieldType(fieldType.Elt)
+		if err != nil {
+			return false, "", err
+		}
+		if isArray {
+			return true, arrayType, fmt.Errorf("unsurport field type [][]" + arrayType)
+		}
+		return true, arrayType, nil
 	default:
-		return "", fmt.Errorf("unknown field type %#v", field)
+		return false, "", fmt.Errorf("unknown field type %#v", field)
 	}
 }
