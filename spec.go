@@ -62,6 +62,7 @@ type TypeSchema struct {
 	Example     string //example value
 	ArraySchema *TypeSchema
 	Properties  map[string]*TypeSchema //object
+	IsOmitempty bool
 }
 
 func (s *TypeSchema) JSON() string {
@@ -97,6 +98,9 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 		sort.Strings(keys)
 		for _, k := range keys {
 			v := s.Properties[k]
+			if v.IsOmitempty && v.Example == "null" { //omitempty
+				continue
+			}
 			sb.WriteString(fmt.Sprintf(prefix2+"\"%s\": ", k)) //write key
 			v.parseJSON(depth+1, sb, false)
 			haxNext := i < len(s.Properties)-1
@@ -162,8 +166,10 @@ func getExampleValue(typeName string, field *ast.Field) string {
 	}
 
 	switch typeName {
-	case "int", "int8", "int32", "int64", "uint", "uint8", "uint32", "uint64", "byte":
+	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64", "byte":
 		return fmt.Sprintf("%d", exampleInt(example))
+	case "float32", "float64":
+		return fmt.Sprintf("%f", exampleFloat(example))
 	case "rune":
 		return fmt.Sprintf("'%c'", exampleRune(example))
 	case "string":
@@ -185,6 +191,15 @@ func exampleInt(example string) int {
 	return v
 }
 
+func exampleFloat(example string) float64 {
+	val := 1.23
+	if example != "" {
+		if v, err := strconv.ParseFloat(example, 64); err == nil {
+			val = v
+		}
+	}
+	return val
+}
 func exampleRune(example string) rune {
 	val := rune(97)
 	if example == "" {
@@ -215,14 +230,17 @@ func exampleString(example string) string {
 }
 
 //getFieldName format json/xml
-func getFieldName(name string, field *ast.Field, format string) string {
+//getFiledName("abc", field, "json")
+func getFieldName(name string, field *ast.Field, format string) (isOmitempty bool, fieldName string) {
 	if field != nil {
 		if field.Tag != nil && field.Tag.Value != "" {
 			tag := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", ""))
 			if val, ok := tag.Lookup(format); ok {
-				name = strings.Split(val, ",")[0]
+				fieldName = strings.Split(val, ",")[0]
+				isOmitempty = strings.Contains(val, "omitempty")
+				return
 			}
 		}
 	}
-	return name
+	return false, name
 }

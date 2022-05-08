@@ -354,13 +354,14 @@ func fullTypeName(pkgName, typeName string) string {
 func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.Field, ref bool) (*TypeSchema, error) {
 	if IsGolangPrimitiveType(typeName) {
 		name := field.Names[0].Name
-		fieldName := getFieldName(name, field, "json")
+		isOmitempty, fieldName := getFieldName(name, field, "json")
 		return &TypeSchema{
-			Name:      name,
-			FieldName: fieldName,
-			Comment:   field.Comment.Text(),
-			Type:      typeName,
-			Example:   getExampleValue(typeName, field),
+			Name:        name,
+			FieldName:   fieldName,
+			Comment:     field.Comment.Text(),
+			Type:        typeName,
+			Example:     getExampleValue(typeName, field),
+			IsOmitempty: isOmitempty,
 		}, nil
 	}
 
@@ -501,7 +502,9 @@ func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*TypeS
 			return nil, err
 		}
 		schema.Name = name
-		schema.FieldName = getFieldName(field.Names[0].Name, field, "json")
+		isOmitempty, fieldName := getFieldName(field.Names[0].Name, field, "json")
+		schema.FieldName = fieldName
+		schema.IsOmitempty = isOmitempty
 		properties[schema.FieldName] = schema
 	}
 	return &TypeSchema{

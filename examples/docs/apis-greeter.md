@@ -35,8 +35,7 @@ GET /greeter
 // object main.Response 
 {
   "code": 10010,  // int, 返回状态码
-  "data": null,  // any, 返回的具体数据
-  "msg": "异常"  // string, 返回文本消息
+  "msg": "异常",  // string, 返回文本消息
 }
 ```
 
