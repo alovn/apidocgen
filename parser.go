@@ -418,13 +418,18 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*TypeSchema, er
 	switch expr := typeSpecDef.TypeSpec.Type.(type) {
 	// type Foo struct {...}
 	case *ast.StructType:
-		return parser.parseStruct(typeSpecDef.File, expr.Fields)
+		schema, err := parser.parseStruct(typeSpecDef.File, expr.Fields)
+		if err != nil {
+			return nil, err
+		}
+		schema.Name = typeName
+		return schema, err
 	default:
 		fmt.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeSpecDef.TypeSpec.Type)
 	}
 
 	sch := TypeSchema{
-		Name:    refTypeName,
+		Name:    typeName,
 		Type:    OBJECT,
 		PkgPath: typeSpecDef.PkgPath,
 	}
@@ -486,34 +491,18 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*TypeSchema, er
 
 func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*TypeSchema, error) {
 	properties := make(map[string]*TypeSchema)
-
 	for _, field := range fields.List {
 		if len(field.Names) != 1 {
 			return nil, errors.New("error len(field.Names) != 1")
 		}
-		// name := field.Names[0].Name
+		name := field.Names[0].Name
 		schema, err := parser.parseStructField(file, field)
 		if err != nil {
 			return nil, err
 		}
+		schema.Name = name
+		schema.FieldName = getFieldName(field.Names[0].Name, field, "json")
 		properties[schema.FieldName] = schema
-
-		// name := field.Names[0]
-		// key := name.Name
-		// fmt.Printf("%s %v\n\n\n", name, name.Obj.Decl)
-		// if field.Tag != nil && field.Tag.Value != "" {
-		// 	tag := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", ""))
-		// 	if j, ok := tag.Lookup("json"); ok && j != "" { //xx,omitempty
-		// 		key = strings.Split(j, ",")[0]
-		// 	}
-		// }
-		// fmt.Println(key)
-
-		// example, ok := tag.Lookup("example")
-		// if ok {
-		// 	m[fieldKey] = example
-		// }
-		// fmt.Println("field", field)
 	}
 	return &TypeSchema{
 		Name:       file.Name.Name,

@@ -23,8 +23,12 @@ type Response struct {
 	Msg  string      `json:"msg,omitempty" example:"返回消息"` //返回文本消息
 	Data interface{} `json:"data,omitempty"`               //返回的具体数据
 }
+type TestData2 struct {
+	MyTitle2 string
+}
 type TestData struct { //测试数据
-	MyTitle string `json:"my_title,omitempty"` //标题
+	MyTitle string    `json:"my_title,omitempty"` //标题
+	Data2   TestData2 `json:"data2,omitempty"`
 }
 
 type Request struct {
@@ -41,6 +45,7 @@ type Request struct {
 //@request Request
 //@response 200 Response{data=TestData} 输出对象 dd
 //@response 500 Response{code=10010,msg="异常"} 出错了
+//@response 500 int 错误
 func greet() {
 	var msg = "Hello World!"
 	fmt.Println(msg)

@@ -15,10 +15,13 @@ GET /greeter
 
 // 输出对象 dd
 // StatusCode: 200
-// object main 
+// object main.Response 
 {
   "code": 0,  // int, 返回状态码
   "data": {
+    "data2": {
+      "MyTitle2": "example"
+    },
     "my_title": "example"  // string, 标题
   },
   "msg": "返回消息"  // string, 返回文本消息
@@ -29,12 +32,20 @@ GET /greeter
 
 // 出错了
 // StatusCode: 500
-// object main 
+// object main.Response 
 {
   "code": 10010,  // int, 返回状态码
   "data": null,  // any, 返回的具体数据
   "msg": "异常"  // string, 返回文本消息
 }
+```
+
+```json
+
+// 错误
+// StatusCode: 500
+// integer integer 
+
 ```
 
 
@@ -49,8 +60,11 @@ GET /greeter2
 
 // 输出对象 dd
 // StatusCode: 200
-// object main 
+// object main.TestData 
 {
+  "data2": {
+    "MyTitle2": "example"
+  },
   "my_title": "example"  // string, 标题
 }
 ```
