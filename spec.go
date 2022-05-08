@@ -108,7 +108,7 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 				sb.WriteString(",")
 			}
 			//comment
-			if len(v.Properties) == 0 && v.Comment != "" && v.ArraySchema == nil {
+			if len(v.Properties) == 0 && v.ArraySchema == nil {
 				sb.WriteString(fmt.Sprintf("  // %s", buildComment(*v)))
 			}
 			sb.WriteString("\n")
@@ -150,7 +150,7 @@ func buildComment(v TypeSchema) string {
 	return strings.TrimSuffix(s, "\n")
 }
 
-func getExampleValue(typeName string, field *ast.Field) string {
+func getFieldExample(typeName string, field *ast.Field) string {
 	example := ""
 	if field != nil {
 		name := field.Names[0]
@@ -164,12 +164,15 @@ func getExampleValue(typeName string, field *ast.Field) string {
 			}
 		}
 	}
+	return getExampleValue(typeName, example)
+}
 
+func getExampleValue(typeName, example string) string {
 	switch typeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64", "byte":
 		return fmt.Sprintf("%d", exampleInt(example))
 	case "float32", "float64":
-		return fmt.Sprintf("%f", exampleFloat(example))
+		return fmt.Sprintf("%.2f", exampleFloat(example))
 	case "rune":
 		return fmt.Sprintf("'%c'", exampleRune(example))
 	case "string":

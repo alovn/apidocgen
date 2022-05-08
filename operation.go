@@ -155,8 +155,9 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 func (operation *Operation) parseObject(refType string, astFile *ast.File) (*TypeSchema, error) {
 	switch {
 	case IsGolangPrimitiveType(refType):
-		refType = TransToValidSchemeType(refType)
-		return &TypeSchema{Name: refType, Type: refType}, nil
+		typeName := TransToValidSchemeType(refType) //example: int->interger
+		exampleValue := getExampleValue(refType, "")
+		return &TypeSchema{Name: refType, Type: typeName, Example: exampleValue}, nil
 	case strings.Contains(refType, "{"):
 		return operation.parseCombinedObject(refType, astFile)
 	default:

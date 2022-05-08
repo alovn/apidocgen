@@ -360,7 +360,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.
 			FieldName:   fieldName,
 			Comment:     field.Comment.Text(),
 			Type:        typeName,
-			Example:     getExampleValue(typeName, field),
+			Example:     getFieldExample(typeName, field),
 			IsOmitempty: isOmitempty,
 		}, nil
 	}

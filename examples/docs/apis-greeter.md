@@ -9,6 +9,7 @@ greeter分组说明
 ```text
 GET /greeter
 ```
+
 **Response**:
 
 ```json
@@ -19,8 +20,12 @@ GET /greeter
 {
   "code": 0,  // int, 返回状态码
   "data": {
+    "MyFloat32": 1.23,  // float32
+    "MyFloat64": 1.23,  // float64
+    "MyIntData": 0,  // int
     "data2": {
-      "MyTitle2": "example"
+      "MyAge2": 0,  // int
+      "MyTitle2": "example"  // string, 标题2
     },
     "my_title": "example"  // string, 标题
   },
@@ -43,16 +48,16 @@ GET /greeter
 
 // 错误
 // StatusCode: 500
-// integer integer 
-
+// integer int 
+0
 ```
-
 
 ### 测试greeter2
 
 ```text
 GET /greeter2
 ```
+
 **Response**:
 
 ```json
@@ -61,10 +66,13 @@ GET /greeter2
 // StatusCode: 200
 // object main.TestData 
 {
+  "MyFloat32": 1.23,  // float32
+  "MyFloat64": 1.23,  // float64
+  "MyIntData": 0,  // int
   "data2": {
-    "MyTitle2": "example"
+    "MyAge2": 0,  // int
+    "MyTitle2": "example"  // string, 标题2
   },
   "my_title": "example"  // string, 标题
 }
 ```
-

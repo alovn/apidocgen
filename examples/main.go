@@ -24,11 +24,15 @@ type Response struct {
 	Data interface{} `json:"data,omitempty"`               //返回的具体数据
 }
 type TestData2 struct {
-	MyTitle2 string
+	MyTitle2 string //标题2
+	MyAge2   int
 }
 type TestData struct { //测试数据
-	MyTitle string    `json:"my_title,omitempty"` //标题
-	Data2   TestData2 `json:"data2,omitempty"`
+	MyTitle   string    `json:"my_title,omitempty"` //标题
+	Data2     TestData2 `json:"data2,omitempty"`
+	MyIntData int
+	MyFloat64 float64
+	MyFloat32 float32
 }
 
 type Request struct {

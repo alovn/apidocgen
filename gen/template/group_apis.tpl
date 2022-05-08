@@ -11,6 +11,7 @@ author: {{$v.Author}}
 ```text
 {{$v.HTTPMethod}} {{$v.Api}}
 ```
+
 **Response**:
 {{range $res := $v.Responses}}
 ```json
@@ -19,5 +20,4 @@ author: {{$v.Author}}
 // StatusCode: {{$res.StatusCode}}
 {{$res.Examples}}
 ```
-{{end}}
-{{end}}
+{{end}}{{end}}

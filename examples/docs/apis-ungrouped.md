@@ -9,5 +9,5 @@ Ungrouped apis
 ```text
 GET /other
 ```
-**Response**:
 
+**Response**:
