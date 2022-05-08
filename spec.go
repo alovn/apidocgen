@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -88,7 +89,14 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 		sb.WriteString("\n")
 		var i int = 0
 		prefix2 := prefix + "  "
-		for k, v := range s.Properties {
+		//sort keys
+		var keys []string
+		for k := range s.Properties {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			v := s.Properties[k]
 			sb.WriteString(fmt.Sprintf(prefix2+"\"%s\": ", k)) //write key
 			v.parseJSON(depth+1, sb, false)
 			haxNext := i < len(s.Properties)-1

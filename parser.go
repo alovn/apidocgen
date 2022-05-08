@@ -432,57 +432,57 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*TypeSchema, er
 	return &sch, nil
 }
 
-func (parser *Parser) parseTypeExpr(file *ast.File, field *ast.Field, typeExpr ast.Expr, ref bool) (*TypeSchema, error) {
-	switch expr := typeExpr.(type) {
-	// type Foo interface{}
-	case *ast.InterfaceType:
-		return &TypeSchema{}, nil
+// func (parser *Parser) parseTypeExpr(file *ast.File, field *ast.Field, typeExpr ast.Expr, ref bool) (*TypeSchema, error) {
+// 	switch expr := typeExpr.(type) {
+// 	// type Foo interface{}
+// 	case *ast.InterfaceType:
+// 		return &TypeSchema{}, nil
 
-	// type Foo struct {...}
-	case *ast.StructType:
-		return parser.parseStruct(file, expr.Fields)
+// 	// type Foo struct {...}
+// 	case *ast.StructType:
+// 		return parser.parseStruct(file, expr.Fields)
 
-	// type Foo Baz
-	case *ast.Ident:
-		return parser.getTypeSchema(expr.Name, file, field, ref)
+// 	// type Foo Baz
+// 	case *ast.Ident:
+// 		return parser.getTypeSchema(expr.Name, file, field, ref)
 
-	// type Foo *Baz
-	case *ast.StarExpr:
-		return parser.parseTypeExpr(file, field, expr.X, ref)
+// 	// type Foo *Baz
+// 	case *ast.StarExpr:
+// 		return parser.parseTypeExpr(file, field, expr.X, ref)
 
-	// type Foo pkg.Bar
-	case *ast.SelectorExpr:
-		if xIdent, ok := expr.X.(*ast.Ident); ok {
-			return parser.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), file, field, ref)
-		}
-	// type Foo []Baz
-	case *ast.ArrayType:
-		itemSchema, err := parser.parseTypeExpr(file, field, expr.Elt, true)
-		if err != nil {
-			return nil, err
-		}
-		return &TypeSchema{Type: "array", ArraySchema: itemSchema}, nil
-	// type Foo map[string]Bar
-	// case *ast.MapType:
-	// 	if _, ok := expr.Value.(*ast.InterfaceType); ok {
-	// 		return &TypeSchema{Type: OBJECT, Properties: nil}, nil
-	// 	}
-	// 	schema, err := parser.parseTypeExpr(file, expr.Value, true)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+// 	// type Foo pkg.Bar
+// 	case *ast.SelectorExpr:
+// 		if xIdent, ok := expr.X.(*ast.Ident); ok {
+// 			return parser.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), file, field, ref)
+// 		}
+// 	// type Foo []Baz
+// 	case *ast.ArrayType:
+// 		itemSchema, err := parser.parseTypeExpr(file, field, expr.Elt, true)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return &TypeSchema{Type: "array", ArraySchema: itemSchema}, nil
+// 	// type Foo map[string]Bar
+// 	// case *ast.MapType:
+// 	// 	if _, ok := expr.Value.(*ast.InterfaceType); ok {
+// 	// 		return &TypeSchema{Type: OBJECT, Properties: nil}, nil
+// 	// 	}
+// 	// 	schema, err := parser.parseTypeExpr(file, expr.Value, true)
+// 	// 	if err != nil {
+// 	// 		return nil, err
+// 	// 	}
 
-	// 	return spec.MapProperty(schema), nil
+// 	// 	return spec.MapProperty(schema), nil
 
-	// case *ast.FuncType:
-	// 	return nil, ErrFuncTypeField
-	// ...
-	default:
-		fmt.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
-	}
+// 	// case *ast.FuncType:
+// 	// 	return nil, ErrFuncTypeField
+// 	// ...
+// 	default:
+// 		fmt.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
+// 	}
 
-	return &TypeSchema{Type: OBJECT}, nil
-}
+// 	return &TypeSchema{Type: OBJECT}, nil
+// }
 
 func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*TypeSchema, error) {
 	properties := make(map[string]*TypeSchema)

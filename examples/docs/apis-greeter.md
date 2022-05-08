@@ -18,10 +18,10 @@ GET /greeter
 // object main 
 {
   "code": 0,  // int, 返回状态码
-  "msg": "返回消息",  // string, 返回文本消息
   "data": {
     "my_title": "example"  // string, 标题
-  }
+  },
+  "msg": "返回消息"  // string, 返回文本消息
 }
 ```
 
@@ -31,8 +31,8 @@ GET /greeter
 // StatusCode: 500
 // object main 
 {
-  "data": null,  // any, 返回的具体数据
   "code": 10010,  // int, 返回状态码
+  "data": null,  // any, 返回的具体数据
   "msg": "异常"  // string, 返回文本消息
 }
 ```
