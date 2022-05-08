@@ -10,7 +10,8 @@ import (
 
 var (
 	// 200 Response{data=Data} examples
-	responsePattern = regexp.MustCompile(`^(\d+)\s+([\w\-.\\{}=,\[\]]+)\s+(.*)?`)
+	// responsePattern = regexp.MustCompile(`^(\d+)\s+([\w\-.\\{}=,\[\]]+)\s+(.*)?`)
+	responsePattern = regexp.MustCompile(`^(\d+)\s+([\w\-.\\{}=,\"\[\]]+|[\w.]+{.*?})\s+(.*)?`)
 	// responsePattern = regexp.MustCompile(`^([\w,]+)\s+([\w{}]+)\s+([\w\-.\\{}=,\[\]]+)[^"]*(.*)?`)
 
 	// ResponseType{data1=Type1,data2=Type2}.
@@ -114,10 +115,13 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 
 // ParseResponseComment parses comment for given `response` comment string.
 func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File) error {
+	operation.parser.clearStructStack()
+	fmt.Println(commentLine)
 	matches := responsePattern.FindStringSubmatch(commentLine)
 	for i, m := range matches {
 		fmt.Println(i, m)
 	}
+	fmt.Println(commentLine, len(matches))
 	if len(matches) != 4 {
 		return nil
 	}
@@ -172,30 +176,41 @@ func (operation *Operation) parseCombinedObject(refType string, astFile *ast.Fil
 	}
 	fmt.Println("parseCombinedObject matches:", matches)
 
-	schema, err := operation.parseObject(matches[1], astFile)
+	schemaA, err := operation.parseObject(matches[1], astFile)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("parseCombinedObject schema=%+v\n", schema)
+	fmt.Printf("parseCombinedObject schema=%+v\n", schemaA)
 
-	fields, props := parseFields(matches[2]), map[string]TypeSchema{}
-
+	fields := parseFields(matches[2])
+	// props := map[string]TypeSchema{}
 	for _, field := range fields {
 		keyVal := strings.SplitN(field, "=", 2)
 		if len(keyVal) == 2 {
-			schema, err := operation.parseObject(keyVal[1], astFile)
-			if err != nil {
-				return nil, err
+			// fmt.Println("keyVal", keyVal[0], keyVal[1]) //data TestData
+			// if is number or string wrap, replace it
+			if isReplaceValue(keyVal[1]) {
+				if p, ok := schemaA.Properties[keyVal[0]]; ok {
+					p.Example = keyVal[1]
+				}
+			} else {
+				schema, err := operation.parseObject(keyVal[1], astFile)
+				if err != nil {
+					return nil, err
+				}
+				schemaA.Properties[keyVal[0]] = schema //data=xx
+				// props[keyVal[0]] = *schema
 			}
 
-			props[keyVal[0]] = *schema
 		}
 	}
-	fmt.Printf("props: %+v\n", props)
-	if len(props) == 0 {
-		return schema, nil
-	}
-	return schema, nil
+	// fmt.Printf("props: %+v\n", props)
+	// if len(props) == 0 {
+	// 	return schema, nil
+	// }
+	fmt.Printf("parseCombinedObject2 schema=%+v\n", schemaA)
+	fmt.Println(schemaA.Properties["data"])
+	return schemaA, nil
 
 	// return spec.ComposedSchema(*schema, spec.Schema{
 	// 	SchemaProps: spec.SchemaProps{
@@ -203,6 +218,22 @@ func (operation *Operation) parseCombinedObject(refType string, astFile *ast.Fil
 	// 		Properties: props,
 	// 	},
 	// }), nil
+}
+
+func isReplaceValue(val string) bool {
+	if (strings.HasPrefix(val, "\"") && strings.HasSuffix(val, "\"")) || (strings.HasPrefix(val, "'") && strings.HasSuffix(val, "'")) {
+		return true
+	}
+	_, err := strconv.ParseInt(val, 10, 64)
+	if err == nil {
+		return true
+	}
+	_, err = strconv.ParseFloat(val, 64)
+	if err == nil {
+		return true
+	}
+	_, err = strconv.ParseBool(val)
+	return err == nil
 }
 
 func parseFields(s string) []string {

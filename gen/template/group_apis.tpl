@@ -11,13 +11,12 @@ author: {{$v.Author}}
 ```text
 {{$v.HTTPMethod}} {{$v.Api}}
 ```
-
+**Response**:
 {{range $res := $v.Responses}}
-Response:
 ```json
 {{if $res.Description}}
 // {{$res.Description}}{{end}}
-// HTTP StatusCode: {{$res.StatusCode}}
+// StatusCode: {{$res.StatusCode}}
 {{$res.Examples}}
 ```
 {{end}}

@@ -392,6 +392,10 @@ func (parser *Parser) isInStructStack(typeSpecDef *TypeSpecDef) bool {
 	return false
 }
 
+func (parser *Parser) clearStructStack() {
+	parser.structStack = parser.structStack[:0]
+}
+
 // ParseDefinition parses given type spec that corresponds to the type under
 // given name and package
 func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*TypeSchema, error) {

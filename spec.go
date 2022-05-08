@@ -159,11 +159,11 @@ func getExampleValue(typeName string, field *ast.Field) string {
 	case "rune":
 		return fmt.Sprintf("'%c'", exampleRune(example))
 	case "string":
-		return fmt.Sprintf("\"%s\"", example)
+		return fmt.Sprintf("\"%s\"", exampleString(example))
 	case "bool":
 		return fmt.Sprintf("%t", exampleBool(example))
 	case "any":
-		return "nil"
+		return "null"
 	}
 
 	return example
@@ -197,6 +197,13 @@ func exampleBool(example string) bool {
 		val, _ = strconv.ParseBool(example)
 	}
 	return val
+}
+
+func exampleString(example string) string {
+	if example == "" {
+		return "example"
+	}
+	return example
 }
 
 //getFieldName format json/xml

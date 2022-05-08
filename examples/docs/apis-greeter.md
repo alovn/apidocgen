@@ -9,18 +9,31 @@ greeter分组说明
 ```text
 GET /greeter
 ```
+**Response**:
 
-
-Response:
 ```json
 
 // 输出对象 dd
-// HTTP StatusCode: 200
+// StatusCode: 200
 // object main 
 {
   "code": 0,  // int, 返回状态码
   "msg": "返回消息",  // string, 返回文本消息
-  "data": nil  // any, 返回的具体数据
+  "data": {
+    "my_title": "example"  // string, 标题
+  }
+}
+```
+
+```json
+
+// 出错了
+// StatusCode: 500
+// object main 
+{
+  "data": null,  // any, 返回的具体数据
+  "code": 10010,  // int, 返回状态码
+  "msg": "异常"  // string, 返回文本消息
 }
 ```
 
@@ -30,16 +43,15 @@ Response:
 ```text
 GET /greeter2
 ```
+**Response**:
 
-
-Response:
 ```json
 
 // 输出对象 dd
-// HTTP StatusCode: 200
+// StatusCode: 200
 // object main 
 {
-  "my_title": ""
+  "my_title": "example"  // string, 标题
 }
 ```
 
