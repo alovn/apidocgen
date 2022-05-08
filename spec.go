@@ -56,6 +56,7 @@ type TypeSchema struct {
 	Name        string //xxRequest, xxResponse
 	FieldName   string
 	Type        string //int, string, bool, object, array
+	FullName    string
 	PkgPath     string
 	Required    bool
 	Comment     string
@@ -69,7 +70,7 @@ type TypeSchema struct {
 func (s *TypeSchema) JSON() string {
 	depth := 0
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("// %s %s %s\n", s.Type, s.Name, s.Comment))
+	// sb.WriteString(fmt.Sprintf("// %s %s %s\n", s.Type, s.Name, s.Comment))
 	s.parseJSON(depth, &sb, true)
 	return sb.String()
 }
@@ -85,9 +86,7 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 		} else {
 			sb.WriteString("{")
 		}
-		if s.Comment != "" {
-			sb.WriteString("  //" + buildComment(*s))
-		}
+		sb.WriteString("  //" + buildComment(*s))
 		sb.WriteString("\n")
 		var i int = 0
 		prefix2 := prefix + "  "
@@ -110,7 +109,7 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 			}
 			//comment
 			if len(v.Properties) == 0 && v.ArraySchema == nil {
-				sb.WriteString(fmt.Sprintf("  // %s", buildComment(*v)))
+				sb.WriteString(fmt.Sprintf("  //%s", buildComment(*v)))
 			}
 			sb.WriteString("\n")
 			i++
@@ -123,7 +122,7 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 		} else {
 			sb.WriteString("[")
 		}
-		sb.WriteString(fmt.Sprintf("  // %s", buildComment(*s)))
+		sb.WriteString(fmt.Sprintf("  //%s", buildComment(*s)))
 		sb.WriteString("\n")
 		s.ArraySchema.parseJSON(depth+1, sb, true)
 		sb.WriteString("\n")
@@ -143,9 +142,11 @@ func buildComment(v TypeSchema) string {
 	if v.IsArray {
 		arrayName := v.ArraySchema.Type //int
 		if v.ArraySchema.Type == OBJECT {
-			arrayName = v.ArraySchema.Name
+			arrayName = v.ArraySchema.FullName
 		}
-		s += fmt.Sprintf("%s(%s), ", ARRAY, arrayName)
+		s += fmt.Sprintf("%s[%s]", ARRAY, arrayName)
+	} else if len(v.Properties) > 0 { //object
+		s += fmt.Sprintf("%s(%s)", v.Type, v.PkgPath+v.FullName)
 	} else {
 		s += v.Type
 	}

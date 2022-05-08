@@ -22,14 +22,15 @@ type Response struct {
 	Code int         `json:"code" example:"0"`             //返回状态码
 	Msg  string      `json:"msg,omitempty" example:"返回消息"` //返回文本消息
 	Data interface{} `json:"data,omitempty"`               //返回的具体数据
-}
-type TestData2 struct {
+} //通用返回结果
+
+type TestData2 struct { //测试数据2
 	MyTitle2 string //标题2
 	MyAge2   int
 }
 type TestData struct { //测试数据
-	MyTitle string `json:"my_title,omitempty"` //标题
-	// Data2      *TestData2 `json:"data2,omitempty"`
+	MyTitle string     `json:"my_title,omitempty"` //标题
+	Data2   *TestData2 `json:"data2,omitempty"`
 	// MyIntData  int
 	// MyFloat64  float64
 	// MyFloat32  float32

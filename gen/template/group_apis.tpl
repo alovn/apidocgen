@@ -15,9 +15,9 @@ author: {{$v.Author}}
 **Response**:
 {{range $res := $v.Responses}}
 ```json
+// StatusCode: {{$res.StatusCode}}
 {{if $res.Description}}
 // {{$res.Description}}{{end}}
-// StatusCode: {{$res.StatusCode}}
 {{$res.Examples}}
 ```
 {{end}}{{end}}

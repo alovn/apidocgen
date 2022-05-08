@@ -359,6 +359,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.
 			Name:        name,
 			FieldName:   fieldName,
 			Comment:     field.Comment.Text(),
+			FullName:    name,
 			Type:        typeName,
 			Example:     getFieldExample(typeName, field),
 			IsOmitempty: isOmitempty,
@@ -374,6 +375,9 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.
 	schema, err := parser.ParseDefinition(typeSpecDef)
 	if err != nil {
 		return nil, err
+	}
+	if schema.Comment == "" {
+		schema.Comment = strings.TrimSuffix(typeSpecDef.TypeSpec.Comment.Text(), "\n")
 	}
 
 	// if ref && len(schema.Type) > 0 && schema.Type[0] == OBJECT {
@@ -423,7 +427,8 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*TypeSchema, er
 		if err != nil {
 			return nil, err
 		}
-		schema.Name = typeName
+		schema.Name = typeSpecDef.Name()
+		schema.FullName = typeSpecDef.FullName()
 		return schema, err
 	default:
 		fmt.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeSpecDef.TypeSpec.Type)
@@ -525,10 +530,12 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (*TypeS
 		return nil, err
 	}
 	if isArray {
+		parser.clearStructStack() //warning
 		schema, err := parser.getTypeSchema(typeName, file, field, false)
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println("arrayschema", schema.Name)
 		return &TypeSchema{
 			IsArray:     isArray,
 			Type:        ARRAY,

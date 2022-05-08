@@ -118,11 +118,11 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	operation.parser.clearStructStack()
 	fmt.Println(commentLine)
 	matches := responsePattern.FindStringSubmatch(commentLine)
-	for i, m := range matches {
-		fmt.Println(i, m)
-	}
-	fmt.Println(commentLine, len(matches))
-	if len(matches) != 4 {
+	// for i, m := range matches {
+	// 	fmt.Println(i, m)
+	// }
+	// fmt.Println(commentLine, len(matches))
+	if len(matches) != 4 && len(matches) != 3 {
 		return nil
 	}
 	//200 Response{data=TestData}
@@ -139,9 +139,9 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		return err
 	}
 	j := schema.JSON()
-	fmt.Printf("schema:%+v\n", schema)
-	fmt.Println("json:")
-	fmt.Println(j)
+	// fmt.Printf("schema:%+v\n", schema)
+	// fmt.Println("json:")
+	// fmt.Println(j)
 	operation.Responses = append(operation.Responses, &ApiResponseSpec{
 		StatusCode:  code,
 		Format:      "json",

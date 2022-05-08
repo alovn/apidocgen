@@ -13,25 +13,28 @@ GET /greeter
 **Response**:
 
 ```json
+// StatusCode: 200
 
 // 输出对象 dd
-// StatusCode: 200
-// object main.Response 
-{
-  "code": 0,  // int, 返回状态码
-  "data": {
-    "MyIntArray": [  // array(int), 
+{  //object(main.Response), 通用返回结果
+  "code": 0,  //int, 返回状态码
+  "data": {  //object(main.TestData)
+    "MyIntArray": [  //array[int]
       0
     ],
-    "MyTestData2Array": [  // array(main.TestData2), 
-      {
-        "MyAge2": 0,  // int
-        "MyTitle2": "example"  // string, 标题2
+    "MyTestData2Array": [  //array[main.TestData2]
+      {  //object(main.TestData2)
+        "MyAge2": 0,  //int
+        "MyTitle2": "example"  //string, 标题2
       }
     ],
-    "my_title": "example"  // string, 标题
+    "data2": {  //object(main.TestData2)
+      "MyAge2": 0,  //int
+      "MyTitle2": "example"  //string, 标题2
+    },
+    "my_title": "example"  //string, 标题
   },
-  "msg": "返回消息"  // string, 返回文本消息
+  "msg": "返回消息"  //string, 返回文本消息
 }
 ```
 
@@ -44,20 +47,23 @@ GET /greeter2
 **Response**:
 
 ```json
+// StatusCode: 200
 
 // 输出对象 dd
-// StatusCode: 200
-// object main.TestData 
-{
-  "MyIntArray": [  // array(int), 
+{  //object(main.TestData)
+  "MyIntArray": [  //array[int]
     0
   ],
-  "MyTestData2Array": [  // array(main.TestData2), 
-    {
-      "MyAge2": 0,  // int
-      "MyTitle2": "example"  // string, 标题2
+  "MyTestData2Array": [  //array[main.TestData2]
+    {  //object(main.TestData2)
+      "MyAge2": 0,  //int
+      "MyTitle2": "example"  //string, 标题2
     }
   ],
-  "my_title": "example"  // string, 标题
+  "data2": {  //object(main.TestData2)
+    "MyAge2": 0,  //int
+    "MyTitle2": "example"  //string, 标题2
+  },
+  "my_title": "example"  //string, 标题
 }
 ```
