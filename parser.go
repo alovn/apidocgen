@@ -352,7 +352,7 @@ func fullTypeName(pkgName, typeName string) string {
 	return typeName
 }
 
-func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.Field) (*TypeSchema, error) {
+func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.Field, parentSchema *TypeSchema) (*TypeSchema, error) {
 	if IsGolangPrimitiveType(typeName) {
 		name := field.Names[0].Name
 		isOmitempty, fieldName := getFieldName(name, field, "json")
@@ -367,6 +367,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.
 			Validate:    getValidateTagValue(field),
 			Tags:        getParameterTags(field),
 			Required:    getRequiredTagValue(field),
+			Parent:      parentSchema,
 		}, nil
 	}
 
@@ -376,7 +377,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.
 	}
 	fmt.Println("typeSpecDef", typeSpecDef.Name())
 
-	schema, err := parser.ParseDefinition(typeSpecDef, field)
+	schema, err := parser.ParseDefinition(typeSpecDef, field, parentSchema)
 	if err != nil {
 		return nil, err
 	}
@@ -407,22 +408,21 @@ func (parser *Parser) clearStructStack() {
 
 // ParseDefinition parses given type spec that corresponds to the type under
 // given name and package
-func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field) (*TypeSchema, error) {
+func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field, parentSchema *TypeSchema) (*TypeSchema, error) {
 	typeName := typeSpecDef.FullName()
 	refTypeName := TypeDocName(typeName, typeSpecDef.TypeSpec)
 
-	if parser.isInStructStack(typeSpecDef) {
-		fmt.Printf("Skipping '%s', recursion detected.", typeName)
-		schema := &TypeSchema{
+	if parentSchema != nil && parentSchema.isInTypeChain(typeSpecDef) {
+		fmt.Printf("Skipping '%s', recursion detected.\n", typeName)
+		return &TypeSchema{
 			Name:      refTypeName,
 			FieldName: refTypeName,
 			FullName:  typeName,
 			Type:      OBJECT,
 			Example:   NULL,
 			PkgPath:   typeSpecDef.PkgPath,
-		}
-		parser.clearStructStack()
-		return schema, nil
+			Parent:    parentSchema,
+		}, nil
 	}
 
 	parser.structStack = append(parser.structStack, typeSpecDef)
@@ -434,7 +434,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field
 	switch expr := typeSpecDef.TypeSpec.Type.(type) {
 	// type Foo struct {...}
 	case *ast.StructType:
-		schema, err := parser.parseStruct(typeSpecDef.File, expr.Fields)
+		schema, err := parser.parseStruct(typeSpecDef, typeSpecDef.File, expr.Fields, parentSchema)
 		if err != nil {
 			return nil, err
 		}
@@ -442,7 +442,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field
 		schema.FullName = typeSpecDef.FullName()
 		return schema, err
 	case *ast.Ident:
-		return parser.getTypeSchema(expr.Name, typeSpecDef.File, field)
+		return parser.getTypeSchema(expr.Name, typeSpecDef.File, field, parentSchema)
 	case *ast.MapType:
 		if keyIdent, ok := expr.Key.(*ast.Ident); ok {
 			if IsGolangPrimitiveType(keyIdent.Name) {
@@ -450,19 +450,20 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field
 				if _, ok := expr.Value.(*ast.InterfaceType); ok {
 					return &TypeSchema{Type: OBJECT, Properties: nil}, nil
 				}
-				schema, err := parser.parseTypeExpr(typeSpecDef.File, field, expr.Value)
+				arrSchama := &TypeSchema{
+					Name:       example,
+					Type:       OBJECT,
+					FieldName:  example,
+					Parent:     parentSchema,
+					Properties: map[string]*TypeSchema{},
+				}
+				schema, err := parser.parseTypeExpr(typeSpecDef.File, field, expr.Value, arrSchama)
 				if err != nil {
 					return nil, err
 				}
-				return &TypeSchema{
-					Name:      example,
-					Type:      OBJECT,
-					FieldName: example,
-					FullName:  schema.FullName,
-					Properties: map[string]*TypeSchema{
-						strings.Trim(example, "\""): schema,
-					},
-				}, err
+				arrSchama.FullName = schema.FullName
+				arrSchama.Properties[strings.Trim(example, "\"")] = schema
+				return arrSchama, nil
 			}
 		}
 
@@ -479,39 +480,40 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field
 	return &sch, nil
 }
 
-func (parser *Parser) parseTypeExpr(file *ast.File, field *ast.Field, typeExpr ast.Expr) (*TypeSchema, error) {
+func (parser *Parser) parseTypeExpr(file *ast.File, field *ast.Field, typeExpr ast.Expr, parentSchama *TypeSchema) (*TypeSchema, error) {
 	switch expr := typeExpr.(type) {
 	// type Foo interface{}
 	case *ast.InterfaceType:
 		return &TypeSchema{
 			Type:    ANY,
 			Example: "null",
+			Parent:  parentSchama,
 		}, nil
 
 	// type Foo struct {...}
 	case *ast.StructType:
-		return parser.parseStruct(file, expr.Fields)
+		return parser.parseStruct(nil, file, expr.Fields, parentSchama)
 
 	// type Foo Baz
 	case *ast.Ident:
-		return parser.getTypeSchema(expr.Name, file, field)
+		return parser.getTypeSchema(expr.Name, file, field, parentSchama)
 
 	// type Foo *Baz
 	case *ast.StarExpr:
-		return parser.parseTypeExpr(file, field, expr.X)
+		return parser.parseTypeExpr(file, field, expr.X, parentSchama)
 
 	// type Foo pkg.Bar
 	case *ast.SelectorExpr:
 		if xIdent, ok := expr.X.(*ast.Ident); ok {
-			return parser.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), file, field)
+			return parser.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), file, field, parentSchama)
 		}
 	// type Foo []Baz
 	case *ast.ArrayType:
-		itemSchema, err := parser.parseTypeExpr(file, field, expr.Elt)
+		itemSchema, err := parser.parseTypeExpr(file, field, expr.Elt, parentSchama)
 		if err != nil {
 			return nil, err
 		}
-		return &TypeSchema{Type: "array", IsArray: true, ArraySchema: itemSchema}, nil
+		return &TypeSchema{Type: "array", IsArray: true, ArraySchema: itemSchema, Parent: parentSchama}, nil
 	// type Foo map[string]Bar
 	case *ast.MapType:
 		if keyIdent, ok := expr.Key.(*ast.Ident); ok {
@@ -520,7 +522,7 @@ func (parser *Parser) parseTypeExpr(file *ast.File, field *ast.Field, typeExpr a
 				if _, ok := expr.Value.(*ast.InterfaceType); ok {
 					return &TypeSchema{Type: OBJECT, Properties: nil}, nil
 				}
-				schema, err := parser.parseTypeExpr(file, field, expr.Value)
+				schema, err := parser.parseTypeExpr(file, field, expr.Value, parentSchama)
 				if err != nil {
 					return nil, err
 				}
@@ -546,15 +548,20 @@ func (parser *Parser) parseTypeExpr(file *ast.File, field *ast.Field, typeExpr a
 	return &TypeSchema{Type: OBJECT}, nil
 }
 
-func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*TypeSchema, error) {
-	properties := make(map[string]*TypeSchema)
-	// parser.clearStructStack() //warning
+func (parser *Parser) parseStruct(typeSpecDef *TypeSpecDef, file *ast.File, fields *ast.FieldList, parentSchama *TypeSchema) (*TypeSchema, error) {
+	structSchema := &TypeSchema{
+		Name:        file.Name.Name,
+		Type:        OBJECT,
+		typeSpecDef: typeSpecDef,
+		Parent:      parentSchama,
+		Properties:  map[string]*TypeSchema{},
+	}
 	for _, field := range fields.List {
 		if len(field.Names) != 1 {
 			return nil, errors.New("error len(field.Names) != 1")
 		}
 		name := field.Names[0].Name
-		schema, err := parser.parseStructField(file, field)
+		schema, err := parser.parseStructField(file, field, structSchema)
 		if err != nil {
 			return nil, err
 		}
@@ -562,21 +569,17 @@ func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*TypeS
 		isOmitempty, fieldName := getFieldName(field.Names[0].Name, field, "json")
 		schema.FieldName = fieldName
 		schema.IsOmitempty = isOmitempty
-		properties[schema.FieldName] = schema
+		structSchema.Properties[schema.FieldName] = schema
 	}
-	return &TypeSchema{
-		Name:       file.Name.Name,
-		Type:       OBJECT,
-		Properties: properties,
-	}, nil
+	return structSchema, nil
 }
 
-func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (*TypeSchema, error) {
+func (parser *Parser) parseStructField(file *ast.File, field *ast.Field, parentSchama *TypeSchema) (*TypeSchema, error) {
 	name := field.Names[0].Name
 	if !ast.IsExported(name) {
 		return nil, nil
 	}
-	return parser.parseTypeExpr(file, field, field.Type)
+	return parser.parseTypeExpr(file, field, field.Type, parentSchama)
 	// isArray, typeName, err := getFieldType(field.Type)
 	// if err != nil {
 	// 	return nil, err

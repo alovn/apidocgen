@@ -93,6 +93,8 @@ type TypeSchema struct {
 	IsOmitempty bool
 	Validate    string
 	Tags        map[string]string
+	typeSpecDef *TypeSpecDef
+	Parent      *TypeSchema
 }
 
 func (s *TypeSchema) JSON() string {
@@ -102,6 +104,7 @@ func (s *TypeSchema) JSON() string {
 	s.parseJSON(depth, &sb, true)
 	return sb.String()
 }
+
 func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 	prefix := ""
 	for i := depth; i > 0; i-- {
@@ -114,7 +117,7 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 		} else {
 			sb.WriteString("{")
 		}
-		sb.WriteString("  //" + buildComment(*s))
+		sb.WriteString("  //" + s.buildComment())
 		sb.WriteString("\n")
 		var i int = 0
 		prefix2 := prefix + "  "
@@ -137,7 +140,7 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 			}
 			//comment
 			if len(v.Properties) == 0 && v.ArraySchema == nil {
-				sb.WriteString(fmt.Sprintf("  //%s", buildComment(*v)))
+				sb.WriteString(fmt.Sprintf("  //%s", v.buildComment()))
 			}
 			sb.WriteString("\n")
 			i++
@@ -150,7 +153,7 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 		} else {
 			sb.WriteString("[")
 		}
-		sb.WriteString(fmt.Sprintf("  //%s", buildComment(*s)))
+		sb.WriteString(fmt.Sprintf("  //%s", s.buildComment()))
 		sb.WriteString("\n")
 		s.ArraySchema.parseJSON(depth+1, sb, true)
 		sb.WriteString("\n")
@@ -165,7 +168,10 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 	}
 }
 
-func buildComment(v TypeSchema) string {
+func (v *TypeSchema) buildComment() string {
+	if v == nil {
+		return ""
+	}
 	s := ""
 	if v.IsArray {
 		arrayName := v.ArraySchema.Type //int
@@ -185,6 +191,18 @@ func buildComment(v TypeSchema) string {
 		s += ", " + v.Comment
 	}
 	return strings.TrimSuffix(s, "\n")
+}
+
+func (v *TypeSchema) isInTypeChain(typeSpecDef *TypeSpecDef) bool {
+	if v.typeSpecDef != nil {
+		if v.typeSpecDef == typeSpecDef {
+			return true
+		}
+	}
+	if v.Parent != nil {
+		return v.Parent.isInTypeChain(typeSpecDef)
+	}
+	return false
 }
 
 func getFieldExample(typeName string, field *ast.Field) string {
