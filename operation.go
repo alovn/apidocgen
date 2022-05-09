@@ -127,7 +127,7 @@ func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast
 	case IsGolangPrimitiveType(refType):
 		return nil
 	default:
-		schema, err := operation.parser.getTypeSchema(refType, astFile, nil, true)
+		schema, err := operation.parser.getTypeSchema(refType, astFile, nil)
 		if err != nil {
 			return err
 		}
@@ -205,7 +205,7 @@ func (operation *Operation) parseObject(refType string, astFile *ast.File) (*Typ
 	case strings.Contains(refType, "{"):
 		return operation.parseCombinedObject(refType, astFile)
 	default:
-		schema, err := operation.parser.getTypeSchema(refType, astFile, nil, true)
+		schema, err := operation.parser.getTypeSchema(refType, astFile, nil)
 		if err != nil {
 			return nil, err
 		}

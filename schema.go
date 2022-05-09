@@ -28,7 +28,8 @@ const (
 	// ANY represent a any value.
 	ANY = "any"
 	// NIL represent a empty value.
-	NIL = "nil"
+	NIL  = "nil"
+	NULL = "null"
 )
 
 // CheckSchemaType checks if typeName is not a name of primitive type.

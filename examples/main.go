@@ -32,17 +32,27 @@ type TestData2 struct {
 	MyTitle2 string //标题2
 	MyAge2   int
 }
+type Map map[string]interface{}
+type Map2 map[string]TestData2
+type Node struct {
+	Name  string
+	Nodes map[string]Node
+}
 type TestData struct {
 	// MyTitle string     `json:"my_title,omitempty"` //标题
-	// Data2   *TestData2 `json:"data2,omitempty"`
+	Data2 *TestData2 `json:"data2,omitempty"`
 	// MyIntData  int
 	// MyFloat64  float64
 	// MyFloat32  float32
 	// MyIntArray       []int
 	// MyTestData2Array []TestData2
 	// Int              *int
-	MyInt  MyInt
+	// MyInt  MyInt
 	MyInts []MyInt
+	Map    Map `json:"amap"`
+	Map2   Map2
+	Map3   map[string]TestData2
+	Nodes  map[string]Node
 }
 
 type Request struct {

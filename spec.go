@@ -264,7 +264,7 @@ func exampleBool(example string) bool {
 
 func exampleString(example string) string {
 	if example == "" {
-		return "example"
+		return "abc"
 	}
 	return example
 }
