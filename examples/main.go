@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/alovn/apidoc/examples/common"
+)
 
 //@title svc-greeter
 //@desc greeter接口文档
@@ -24,11 +28,11 @@ type Response struct {
 	Data interface{} `json:"data,omitempty"`               //返回的具体数据
 } //通用返回结果
 
-type TestData2 struct { //测试数据2
+type TestData2 struct {
 	MyTitle2 string //标题2
 	MyAge2   int
 }
-type TestData struct { //测试数据
+type TestData struct {
 	MyTitle string     `json:"my_title,omitempty"` //标题
 	Data2   *TestData2 `json:"data2,omitempty"`
 	// MyIntData  int
@@ -39,23 +43,24 @@ type TestData struct { //测试数据
 }
 
 type Request struct {
-	ID    int    `query:"id"`
-	TID   int    `param:"tid"`
+	ID    int    `query:"id" header:"id" required:"true" example:"12357"` //this id
+	TID   int    `param:"tid" validate:"required"`
 	Name  string `json:"name,omitempty"`
 	Token string `header:"token"`
-}
+} //请求对象
 
 //@title 测试greeter
 //@api GET /greeter
 //@group greeter
 //@accept json
 //@request Request
-//@response 200 Response{data=TestData} 输出对象 dd
-//@response1 500 Response{code=10010,msg="异常"} 出错了
+//@response 200 common.Response{data=TestData} 输出对象 dd
+//@response 500 Response{code=10010,msg="异常"} 出错了
 //@response1 500 int 错误
-func greet() {
+func greet() *common.Response {
 	var msg = "Hello World!"
 	fmt.Println(msg)
+	return &common.Response{}
 }
 
 //@title 测试greeter2

@@ -40,7 +40,33 @@ type ApiSpec struct {
 	Tags        []string
 	Group       string
 	Responses   []*ApiResponseSpec
-	// Parameters
+	Requests    ApiRequestSpec
+}
+
+type ApiRequestSpec struct {
+	Parameters map[string]*ApiParameterSpec
+	Body       string
+}
+
+type ApiParameterSpec struct {
+	Name        string
+	Required    bool
+	Description string
+	Validate    string
+	Example     string
+	types       []string
+}
+
+func (p ApiParameterSpec) Types() string {
+	s := ""
+	for i, t := range p.types {
+		if i == 0 {
+			s += t
+		} else {
+			s += "," + t
+		}
+	}
+	return s
 }
 
 type ApiResponseSpec struct {
@@ -65,6 +91,8 @@ type TypeSchema struct {
 	ArraySchema *TypeSchema
 	Properties  map[string]*TypeSchema //object
 	IsOmitempty bool
+	Validate    string
+	Tags        map[string]string
 }
 
 func (s *TypeSchema) JSON() string {
@@ -197,7 +225,7 @@ func getExampleValue(typeName, example string) string {
 
 func exampleInt(example string) int {
 	if example == "" {
-		return 0
+		return 123
 	}
 	v, _ := strconv.Atoi(example)
 	return v
@@ -244,15 +272,49 @@ func exampleString(example string) string {
 //getFieldName format json/xml
 //getFiledName("abc", field, "json")
 func getFieldName(name string, field *ast.Field, format string) (isOmitempty bool, fieldName string) {
+	tagValue, has := getTagValue(format, field)
+	if has {
+		fieldName = strings.Split(tagValue, ",")[0]
+		isOmitempty = strings.Contains(tagValue, "omitempty")
+		return
+	}
+	return false, name
+}
+
+func getTagValue(tagName string, field *ast.Field) (tagValue string, has bool) {
 	if field != nil {
 		if field.Tag != nil && field.Tag.Value != "" {
 			tag := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", ""))
-			if val, ok := tag.Lookup(format); ok {
-				fieldName = strings.Split(val, ",")[0]
-				isOmitempty = strings.Contains(val, "omitempty")
-				return
-			}
+			return tag.Lookup(tagName)
 		}
 	}
-	return false, name
+	return
+}
+
+func getValidateTagValue(field *ast.Field) (validate string) {
+	validate, _ = getTagValue("validate", field)
+	return
+}
+
+func getRequiredTagValue(field *ast.Field) (required bool) {
+	if val, has := getTagValue("required", field); has {
+		required, _ = strconv.ParseBool(val)
+	}
+	if !required {
+		validate := getValidateTagValue(field)
+		required = strings.Contains(validate, "required")
+	}
+	return
+}
+
+func getParameterTags(field *ast.Field) map[string]string {
+	parameters := make(map[string]string)
+
+	keys := []string{"header", "param", "query", "form"}
+	for _, key := range keys {
+		if val, has := getTagValue(key, field); has {
+			parameters[key] = val
+		}
+	}
+	return parameters
 }

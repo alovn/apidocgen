@@ -21,6 +21,7 @@ const (
 	versionAttr     = "@version"
 	descriptionAttr = "@desc"
 	acceptAttr      = "@accept"
+	requestAttr     = "@request"
 	successAttr     = "@success"
 	failureAttr     = "@failure"
 	responseAttr    = "@response"
@@ -358,11 +359,14 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.
 		return &TypeSchema{
 			Name:        name,
 			FieldName:   fieldName,
-			Comment:     field.Comment.Text(),
+			Comment:     strings.TrimSuffix(field.Comment.Text(), "\n"),
 			FullName:    name,
 			Type:        typeName,
 			Example:     getFieldExample(typeName, field),
 			IsOmitempty: isOmitempty,
+			Validate:    getValidateTagValue(field),
+			Tags:        getParameterTags(field),
+			Required:    getRequiredTagValue(field),
 		}, nil
 	}
 
@@ -549,83 +553,6 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (*TypeS
 		}
 		return schema, nil
 	}
-
-	// if field.Names == nil {
-	// 	typeName, err := getFieldType(field.Type)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	schema, err := parser.getTypeSchema(typeName, file, false)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	if len(schema.Type) > 0 && schema.Type == OBJECT {
-	// 		if len(schema.Properties) == 0 {
-	// 			return nil, nil
-	// 		}
-
-	// 		properties := map[string]*TypeSchema{}
-	// 		for k, v := range schema.Properties {
-	// 			properties[k] = v
-	// 		}
-
-	// 		return properties, nil
-	// 	}
-
-	// 	// for alias type of non-struct types ,such as array,map, etc. ignore field tag.
-	// 	// return map[string]*TypeSchema{Type: typeName}, nil, nil
-	// }
-
-	// ps := parser.fieldParserFactory(parser, field)
-
-	// if ps.ShouldSkip() {
-	// 	return nil, nil, nil
-	// }
-
-	// fieldName, err := ps.FieldName()
-	// if err != nil {
-	// 	return nil, nil, err
-	// }
-
-	// schema, err := ps.CustomSchema()
-	// if err != nil {
-	// 	return nil, nil, err
-	// }
-
-	// if schema == nil {
-	// 	typeName, err := getFieldType(field.Type)
-	// 	if err == nil {
-	// 		// named type
-	// 		schema, err = parser.getTypeSchema(typeName, file, true)
-	// 	} else {
-	// 		// unnamed type
-	// 		schema, err = parser.parseTypeExpr(file, field.Type, false)
-	// 	}
-
-	// 	if err != nil {
-	// 		return nil, nil, err
-	// 	}
-	// }
-
-	// err = ps.ComplementSchema(schema)
-	// if err != nil {
-	// 	return nil, nil, err
-	// }
-
-	// var tagRequired []string
-
-	// required, err := ps.IsRequired()
-	// if err != nil {
-	// 	return nil, nil, err
-	// }
-
-	// if required {
-	// 	tagRequired = append(tagRequired, fieldName)
-	// }
-
-	// return map[string]*TypeSchema{fieldName: *schema}, tagRequired, nil
 }
 
 func getFieldType(field ast.Expr) (isArray bool, typeName string, err error) {

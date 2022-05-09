@@ -4,7 +4,7 @@
 
 ## Apis
 
-### 测试hello
+### @api 测试hello
 
 ```text
 GET /hello
@@ -12,7 +12,7 @@ GET /hello
 
 **Response**:
 
-### 测试hello2
+### @api 测试hello2
 
 ```text
 GET /hello2

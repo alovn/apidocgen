@@ -4,7 +4,7 @@ Ungrouped apis
 
 ## Apis
 
-### 测试other
+### @api 测试other
 
 ```text
 GET /other

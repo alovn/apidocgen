@@ -13,7 +13,7 @@ var (
 	// responsePattern = regexp.MustCompile(`^(\d+)\s+([\w\-.\\{}=,\[\]]+)\s+(.*)?`)
 	responsePattern = regexp.MustCompile(`^(\d+)\s+([\w\-.\\{}=,\"\[\]]+|[\w.]+{.*?})\s+(.*)?`)
 	// responsePattern = regexp.MustCompile(`^([\w,]+)\s+([\w{}]+)\s+([\w\-.\\{}=,\[\]]+)[^"]*(.*)?`)
-
+	requestPattern = regexp.MustCompile(`([\w\-.\\\[\]]+)\s*(.*)?`)
 	// ResponseType{data1=Type1,data2=Type2}.
 	combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]+){(.*)}$`)
 )
@@ -66,6 +66,8 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		operation.ParseTagsComment(lineRemainder)
 	case apiAttr:
 		return operation.ParseRouterComment(lineRemainder)
+	case requestAttr:
+		return operation.ParseRequestComment(lineRemainder, astFile)
 	case successAttr, failureAttr, responseAttr:
 		return operation.ParseResponseComment(lineRemainder, astFile)
 	case deprecatedAttr:
@@ -111,6 +113,48 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	operation.Api = matches[2]
 	operation.FullURL = fmt.Sprintf("%s/%s", strings.TrimSuffix(operation.parser.doc.BaseURL, "/"), strings.TrimPrefix(operation.Api, "/"))
 	return nil
+}
+
+func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast.File) error {
+	fmt.Println("Reqquest comment-------" + commentLine)
+	matches := requestPattern.FindStringSubmatch(commentLine)
+	//0 Request 1 Request 2 Comment
+	if len(matches) != 3 {
+		return nil
+	}
+	refType := matches[1]
+	switch {
+	case IsGolangPrimitiveType(refType):
+		return nil
+	default:
+		schema, err := operation.parser.getTypeSchema(refType, astFile, nil, true)
+		if err != nil {
+			return err
+		}
+		if schema == nil || schema.Properties == nil {
+			return nil
+		}
+		operation.Requests = ApiRequestSpec{
+			Parameters: map[string]*ApiParameterSpec{},
+		}
+		for _, p := range schema.Properties {
+			for pType, pName := range p.Tags {
+				if param, ok := operation.Requests.Parameters[pName]; ok {
+					param.types = append(param.types, pType)
+				} else {
+					operation.Requests.Parameters[pName] = &ApiParameterSpec{
+						Name:        pName,
+						Required:    p.Required,
+						Description: p.Comment,
+						Validate:    p.Validate,
+						Example:     p.Example,
+						types:       []string{pType},
+					}
+				}
+			}
+		}
+		return nil
+	}
 }
 
 // ParseResponseComment parses comment for given `response` comment string.
