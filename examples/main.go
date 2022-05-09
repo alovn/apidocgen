@@ -13,14 +13,14 @@ func main() {
 	//@group greeter
 	//@title greeter分组
 	//@desc greeter分组说明
-	resigter(greet)
-
-	resigter(greet)
+	group(greet)
 }
 
-func resigter(f func()) {
+func group(f func()) {
 
 }
+
+type MyInt int
 
 type Response struct {
 	Code int         `json:"code" example:"0"`             //返回状态码
@@ -33,13 +33,16 @@ type TestData2 struct {
 	MyAge2   int
 }
 type TestData struct {
-	MyTitle string     `json:"my_title,omitempty"` //标题
-	Data2   *TestData2 `json:"data2,omitempty"`
+	// MyTitle string     `json:"my_title,omitempty"` //标题
+	// Data2   *TestData2 `json:"data2,omitempty"`
 	// MyIntData  int
 	// MyFloat64  float64
 	// MyFloat32  float32
-	MyIntArray       []int
-	MyTestData2Array []TestData2
+	// MyIntArray       []int
+	// MyTestData2Array []TestData2
+	// Int              *int
+	MyInt  MyInt
+	MyInts []MyInt
 }
 
 type Request struct {
@@ -53,20 +56,21 @@ type Request struct {
 //@api GET /greeter
 //@group greeter
 //@accept json
-//@request Request
-//@response 200 common.Response{data=TestData} 输出对象 dd
-//@response 500 Response{code=10010,msg="异常"} 出错了
+//@request1 Request
+//@response 200 Response{data=TestData} 输出对象 dd
+//@response1 200 common.Response{data=TestData} 输出对象 dd
+//@response1 500 Response{code=10010,msg="异常"} 出错了
 //@response1 500 int 错误
-func greet() *common.Response {
+func greet() {
 	var msg = "Hello World!"
 	fmt.Println(msg)
-	return &common.Response{}
+	fmt.Println(&common.Response{})
 }
 
 //@title 测试greeter2
 //@api GET /greeter2
 //@group greeter
-//@response 200 TestData 输出对象 dd
+//@response1 200 TestData 输出对象 dd
 func greet2() {
 	var msg = "Hello World!"
 	fmt.Println(msg)

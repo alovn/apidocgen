@@ -4,7 +4,7 @@
 
 ## Apis
 {{range $k,$v := .Apis}}
-### @api {{$v.Title}}
+### {{$v.Title}}
 {{if $v.Author}}
 author: {{$v.Author}}
 {{end}}

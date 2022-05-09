@@ -376,7 +376,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.
 	}
 	fmt.Println("typeSpecDef", typeSpecDef.Name())
 
-	schema, err := parser.ParseDefinition(typeSpecDef)
+	schema, err := parser.ParseDefinition(typeSpecDef, field)
 	if err != nil {
 		return nil, err
 	}
@@ -407,7 +407,7 @@ func (parser *Parser) clearStructStack() {
 
 // ParseDefinition parses given type spec that corresponds to the type under
 // given name and package
-func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*TypeSchema, error) {
+func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field) (*TypeSchema, error) {
 	typeName := typeSpecDef.FullName()
 	refTypeName := TypeDocName(typeName, typeSpecDef.TypeSpec)
 
@@ -434,6 +434,9 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*TypeSchema, er
 		schema.Name = typeSpecDef.Name()
 		schema.FullName = typeSpecDef.FullName()
 		return schema, err
+	case *ast.Ident:
+		fmt.Println("myint:", expr.Name)
+		return parser.getTypeSchema(expr.Name, typeSpecDef.File, field, false)
 	default:
 		fmt.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeSpecDef.TypeSpec.Type)
 	}
