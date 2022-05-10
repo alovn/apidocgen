@@ -7,6 +7,7 @@ import (
 )
 
 //@title 用户服务
+//@service svc-user
 //@desc 用户相关的服务接口
 //@baseurl /user
 func main() {

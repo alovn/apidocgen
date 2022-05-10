@@ -6,7 +6,7 @@
 
 ### 添加地址接口
 
-*author: alovn*
+author: _alovn_
 
 ```text
 POST /user/address/create
@@ -22,8 +22,7 @@ parameters|type|required|validate|example|description
 **Response**:
 
 ```json
-// StatusCode: 200
-
+// StatusCode: 200 
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
   "msg": "success",  //string, 返回消息
@@ -32,7 +31,7 @@ parameters|type|required|validate|example|description
 
 ### 更新地址接口
 
-*author: alovn*
+author: _alovn_
 
 ```text
 POST /user/address/update
@@ -48,8 +47,7 @@ parameters|type|required|validate|example|description
 **Response**:
 
 ```json
-// StatusCode: 200
-
+// StatusCode: 200 
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
   "msg": "success",  //string, 返回消息
@@ -58,7 +56,7 @@ parameters|type|required|validate|example|description
 
 ### 删除地址接口
 
-*author: alovn*
+author: _alovn_
 
 ```text
 POST /user/address/delete
@@ -73,8 +71,7 @@ parameters|type|required|validate|example|description
 **Response**:
 
 ```json
-// StatusCode: 200
-
+// StatusCode: 200 
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
   "msg": "success",  //string, 返回消息
@@ -83,7 +80,7 @@ parameters|type|required|validate|example|description
 
 ### 获取地址信息
 
-*author: alovn*
+author: _alovn_
 
 ```text
 GET /user/address/get/:id
@@ -98,8 +95,7 @@ parameters|type|required|validate|example|description
 **Response**:
 
 ```json
-// StatusCode: 200
-
+// StatusCode: 200 
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
   "data": {  //object(handler.AddressResponse), 返回地址信息
@@ -113,7 +109,7 @@ parameters|type|required|validate|example|description
 
 ### 获取地址列表
 
-*author: alovn*
+author: _alovn_
 
 ```text
 GET /user/address/list
@@ -124,8 +120,7 @@ GET /user/address/list
 **Response**:
 
 ```json
-// StatusCode: 200
-
+// StatusCode: 200 
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
   "data": [  //array[handler.AddressResponse]

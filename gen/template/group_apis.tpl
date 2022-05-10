@@ -6,7 +6,7 @@
 {{range $k,$v := .Apis}}
 ### {{$v.Title}}
 {{if $v.Author}}
-*author: {{$v.Author}}*
+author: _{{$v.Author}}_
 {{end}}
 ```text
 {{$v.HTTPMethod}} {{$v.FullURL}}
@@ -21,9 +21,7 @@ parameters|type|required|validate|example|description
 {{if $v.Responses}}**Response**:
 {{range $res := $v.Responses}}
 ```json
-// StatusCode: {{$res.StatusCode}}
-{{if $res.Description}}
-// {{$res.Description}}{{end}}
+// StatusCode: {{$res.StatusCode}} {{$res.Description}}
 {{$res.Examples}}
 ```
 {{end}}{{end}}{{end}}

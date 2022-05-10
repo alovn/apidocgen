@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	serviceAttr     = "@service"
 	apiAttr         = "@api"
 	titleAttr       = "@title"
 	groupAttr       = "@group"
@@ -212,6 +213,8 @@ func parseApiDocInfo(parser *Parser, comments []string) error {
 			multilineBlock = true
 		}
 		switch strings.ToLower(attribute) {
+		case serviceAttr:
+			parser.doc.Service = value
 		case versionAttr:
 			parser.doc.Version = value
 		case titleAttr:
@@ -233,6 +236,8 @@ func isApiDocComment(comments []string) bool {
 	for _, commentLine := range comments {
 		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 		switch attribute {
+		case serviceAttr:
+			return true
 		case apiAttr, successAttr, failureAttr, responseAttr:
 			return false
 		}

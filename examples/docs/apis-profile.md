@@ -6,7 +6,7 @@
 
 ### 获取用户资料
 
-*author: alovn*
+author: _alovn_
 
 ```text
 GET /user/profile/get
@@ -17,8 +17,7 @@ GET /user/profile/get
 **Response**:
 
 ```json
-// StatusCode: 200
-
+// StatusCode: 200 
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
   "data": {  //object(handler.ProfileResponse)

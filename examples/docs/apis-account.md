@@ -6,8 +6,6 @@
 
 ### 用户注册接口
 
-*author: alovn*
-
 ```text
 POST /user/account/register
 ```
@@ -22,8 +20,7 @@ parameters|type|required|validate|example|description
 **Response**:
 
 ```json
-// StatusCode: 200
-
+// StatusCode: 200 注册成功返回数据
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
   "data": {  //object(handler.RegisterResponse), 注册返回数据
@@ -35,9 +32,17 @@ parameters|type|required|validate|example|description
 }
 ```
 
+```json
+// StatusCode: 200 密码格式错误
+{  //object(common.Response), 通用返回结果
+  "code": 10011,  //int, 返回状态码
+  "msg": "password format error",  //string, 返回消息
+}
+```
+
 ### 用户登录接口
 
-*author: alovn*
+author: _alovn_
 
 ```text
 POST /user/account/login
@@ -54,9 +59,7 @@ parameters|type|required|validate|example|description
 **Response**:
 
 ```json
-// StatusCode: 200
-
-// 登录成功返回数据
+// StatusCode: 200 登录成功返回数据
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
   "data": {  //object(handler.LoginResponse), 登录返回数据
@@ -67,9 +70,7 @@ parameters|type|required|validate|example|description
 ```
 
 ```json
-// StatusCode: 200
-
-// 密码错误
+// StatusCode: 200 密码错误
 {  //object(common.Response), 通用返回结果
   "code": 10020,  //int, 返回状态码
   "msg": "password_error",  //string, 返回消息

@@ -29,7 +29,8 @@ type RegisterResponse struct {
 //@title 用户注册接口
 //@group account
 //@request RegisterRequest
-//@response 200 common.Response{code=0,msg="success",data=RegisterResponse}
+//@response 200 common.Response{code=0,msg="success",data=RegisterResponse} "注册成功返回数据"
+//@response 200 common.Response{code=10011,msg="password format error"} "密码格式错误"
 //@author alovn
 func (h *AccountHandler) Register(w http.ResponseWriter, r *http.Request) {
 	res := common.NewResponse(200, "注册成功", &RegisterResponse{
@@ -55,8 +56,8 @@ type LoginResponse struct {
 //@api POST /account/login
 //@group account
 //@request LoginRequest
-//@response 200 common.Response{code=0,msg="success",data=LoginResponse} 登录成功返回数据
-//@response 200 common.Response{code=10020,msg="password_error"} 密码错误
+//@response 200 common.Response{code=0,msg="success",data=LoginResponse} "登录成功返回数据"
+//@response 200 common.Response{code=10020,msg="password_error"} "密码错误"
 //@author alovn
 func (h *AccountHandler) Login(w http.ResponseWriter, r *http.Request) {
 	//bind LoginRequest

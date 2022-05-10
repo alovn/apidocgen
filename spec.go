@@ -10,6 +10,7 @@ import (
 )
 
 type ApiDocSpec struct {
+	Service     string
 	Title       string
 	Version     string
 	Description string

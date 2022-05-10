@@ -10,10 +10,8 @@ import (
 
 var (
 	// 200 Response{data=Data} examples
-	// responsePattern = regexp.MustCompile(`^(\d+)\s+([\w\-.\\{}=,\[\]]+)\s+(.*)?`)
-	responsePattern = regexp.MustCompile(`^(\d+)\s+([\w\-.\\{}=,\"\[\]]+|[\w.\s]+{.*?})\s*(.*)?`)
-	// responsePattern = regexp.MustCompile(`^([\w,]+)\s+([\w{}]+)\s+([\w\-.\\{}=,\[\]]+)[^"]*(.*)?`)
-	requestPattern = regexp.MustCompile(`([\w\-.\\\[\]]+)\s*(.*)?`)
+	responsePattern = regexp.MustCompile(`^(\d+)\s+([\w\.\d_]+\{.*\}|[\w\.\d_]+)[^"]*(.*)?`)
+	requestPattern  = regexp.MustCompile(`([\w\-.\\\[\]]+)\s*(.*)?`)
 	// ResponseType{data1=Type1,data2=Type2}.
 	combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]+){(.*)}$`)
 )
