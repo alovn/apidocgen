@@ -6,16 +6,18 @@
 
 ### 用户注册接口
 
+author: _alovn_
+
 ```text
 POST /user/account/register
 ```
 
 **Request**:
 
-parameters|type|required|validate|example|description
---|--|--|--|--|--
-**password**|_form_|true|required|"abc"|密码
-**username**|_form_|true|required|"abc"|用户名
+parameters|modes|type|required|validate|example|description
+--|--|--|--|--|--|--
+**password**|_form_|string|true|required|"abc"|密码
+**username**|_form_|string|true|required|"abc"|用户名
 
 **Response**:
 
@@ -50,11 +52,11 @@ POST /user/account/login
 
 **Request**:
 
-parameters|type|required|validate|example|description
---|--|--|--|--|--
-**password**|_form_|true|required|"abc"|登录密码
-**username**|_form_|true|required|"abc"|登录用户名
-**validate_code**|_form_|false||"abc"|验证码
+parameters|modes|type|required|validate|example|description
+--|--|--|--|--|--|--
+**password**|_form_|string|true|required|"abc"|登录密码
+**username**|_form_|string|true|required|"abc"|登录用户名
+**validate_code**|_form_|string|false||"abc"|验证码
 
 **Response**:
 

@@ -6,9 +6,10 @@ import (
 	"github.com/alovn/apidoc/examples/common"
 )
 
-//@title svc-greeter
+//@title greeter服务
+//@service svc-greeter
 //@desc greeter接口文档
-//@baseurl http://bytego.dev/admin/
+//@baseurl /
 func main() {
 	//@group greeter
 	//@title greeter分组
@@ -68,9 +69,9 @@ type Request struct {
 //@group greeter
 //@accept json
 //@request1 Request
-//@response 200 Response{data=TestData} 输出对象 dd
-//@response1 200 common.Response{data=TestData} 输出对象 dd
-//@response1 500 Response{code=10010,msg="异常"} 出错了
+//@response 200 Response{data=TestData} "输出对象 dd"
+//@response1 200 common.Response{data=TestData} "输出对象 dd"
+//@response1 500 Response{code=10010,msg="异常"} "出错了"
 //@response1 500 int 错误
 func greet() {
 	var msg = "Hello World!"
@@ -81,7 +82,7 @@ func greet() {
 //@title 测试greeter2
 //@api GET /greeter2
 //@group greeter
-//@response1 200 TestData 输出对象 dd
+//@response1 200 TestData "输出对象 dd"
 func greet2() {
 	var msg = "Hello World!"
 	fmt.Println(msg)

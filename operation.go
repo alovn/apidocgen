@@ -135,9 +135,9 @@ func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast
 			Parameters: map[string]*ApiParameterSpec{},
 		}
 		for _, p := range schema.Properties {
-			for pType, pName := range p.Tags {
+			for pMode, pName := range p.Tags {
 				if param, ok := operation.Requests.Parameters[pName]; ok {
-					param.types = append(param.types, pType)
+					param.modes = append(param.modes, pMode)
 				} else {
 					operation.Requests.Parameters[pName] = &ApiParameterSpec{
 						Name:        pName,
@@ -145,7 +145,8 @@ func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast
 						Description: p.Comment,
 						Validate:    p.Validate,
 						Example:     p.Example,
-						types:       []string{pType},
+						modes:       []string{pMode},
+						Type:        p.Type,
 					}
 				}
 			}

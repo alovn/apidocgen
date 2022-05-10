@@ -14,10 +14,10 @@ POST /user/address/create
 
 **Request**:
 
-parameters|type|required|validate|example|description
---|--|--|--|--|--
-**address**|_form_|true|required|"abc"|地址
-**city_id**|_form_|true|required|123|城市ID
+parameters|modes|type|required|validate|example|description
+--|--|--|--|--|--|--
+**address**|_form_|string|true|required|"abc"|地址
+**city_id**|_form_|int64|true|required|123|城市ID
 
 **Response**:
 
@@ -39,10 +39,10 @@ POST /user/address/update
 
 **Request**:
 
-parameters|type|required|validate|example|description
---|--|--|--|--|--
-**address**|_form_|true|required|"abc"|地址
-**id**|_form_|true|required|123|地址ID
+parameters|modes|type|required|validate|example|description
+--|--|--|--|--|--|--
+**address**|_form_|string|true|required|"abc"|地址
+**id**|_form_|int64|true|required|123|地址ID
 
 **Response**:
 
@@ -64,9 +64,9 @@ POST /user/address/delete
 
 **Request**:
 
-parameters|type|required|validate|example|description
---|--|--|--|--|--
-**id**|_form_|true|required|123|地址ID
+parameters|modes|type|required|validate|example|description
+--|--|--|--|--|--|--
+**id**|_form_|int64|true|required|123|地址ID
 
 **Response**:
 
@@ -88,9 +88,9 @@ GET /user/address/get/:id
 
 **Request**:
 
-parameters|type|required|validate|example|description
---|--|--|--|--|--
-**id**|_param_|false||123|地址ID
+parameters|modes|type|required|validate|example|description
+--|--|--|--|--|--|--
+**id**|_param_|int64|false||123|地址ID
 
 **Response**:
 
