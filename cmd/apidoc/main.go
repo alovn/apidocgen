@@ -8,7 +8,7 @@ import (
 
 func main() {
 	g := gen.New(&gen.Config{
-		SearchDir:      "../../examples",
+		SearchDir:      "../../examples/svc-user/",
 		MainFile:       "main.go",
 		OutputDir:      "../../examples/docs",
 		IsGenGroupFile: true,

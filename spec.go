@@ -70,7 +70,6 @@ func (p ApiParameterSpec) Types() string {
 }
 
 type ApiResponseSpec struct {
-	IsSuccess   bool
 	StatusCode  int
 	Format      string //json xml
 	Examples    string

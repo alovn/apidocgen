@@ -72,7 +72,7 @@ func (g *Gen) Build() error {
 			if err = t.Execute(f, group); err != nil {
 				return err
 			}
-			fmt.Println("generated:", fileName)
+			fmt.Println("Generated:", fileName)
 		}
 
 		//readme

@@ -11,7 +11,7 @@ import (
 var (
 	// 200 Response{data=Data} examples
 	// responsePattern = regexp.MustCompile(`^(\d+)\s+([\w\-.\\{}=,\[\]]+)\s+(.*)?`)
-	responsePattern = regexp.MustCompile(`^(\d+)\s+([\w\-.\\{}=,\"\[\]]+|[\w.]+{.*?})\s+(.*)?`)
+	responsePattern = regexp.MustCompile(`^(\d+)\s+([\w\-.\\{}=,\"\[\]]+|[\w.\s]+{.*?})\s*(.*)?`)
 	// responsePattern = regexp.MustCompile(`^([\w,]+)\s+([\w{}]+)\s+([\w\-.\\{}=,\[\]]+)[^"]*(.*)?`)
 	requestPattern = regexp.MustCompile(`([\w\-.\\\[\]]+)\s*(.*)?`)
 	// ResponseType{data1=Type1,data2=Type2}.
@@ -116,7 +116,6 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 }
 
 func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast.File) error {
-	fmt.Println("Reqquest comment-------" + commentLine)
 	matches := requestPattern.FindStringSubmatch(commentLine)
 	//0 Request 1 Request 2 Comment
 	if len(matches) != 3 {
@@ -214,13 +213,11 @@ func (operation *Operation) parseCombinedObject(refType string, astFile *ast.Fil
 	if len(matches) != 3 { //[Response{data=TestData} Response data=TestData]
 		return nil, fmt.Errorf("invalid type: %s", refType)
 	}
-	fmt.Println("parseCombinedObject matches:", matches)
 
 	schemaA, err := operation.parseObject(matches[1], astFile)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("parseCombinedObject schema=%+v\n", schemaA)
 
 	fields := parseFields(matches[2])
 	// props := map[string]TypeSchema{}
@@ -229,35 +226,37 @@ func (operation *Operation) parseCombinedObject(refType string, astFile *ast.Fil
 		if len(keyVal) == 2 {
 			// fmt.Println("keyVal", keyVal[0], keyVal[1]) //data TestData
 			// if is number or string wrap, replace it
-			if isReplaceValue(keyVal[1]) {
+			if isReplaceValue(keyVal[1]) { //replace int,string, examples code or msg
 				if p, ok := schemaA.Properties[keyVal[0]]; ok {
 					p.Example = keyVal[1]
 				}
 			} else {
-				schema, err := operation.parseObject(keyVal[1], astFile)
+				//check is array
+				arrayFlag := "[]"
+				typeName := keyVal[1]
+				isArray := strings.HasPrefix(typeName, arrayFlag)
+				if isArray { //array
+					typeName = strings.TrimPrefix(typeName, arrayFlag)
+				}
+				schema, err := operation.parseObject(typeName, astFile)
 				if err != nil {
 					return nil, err
 				}
-				schemaA.Properties[keyVal[0]] = schema //data=xx
-				// props[keyVal[0]] = *schema
+				if isArray {
+					schemaA.Properties[keyVal[0]] = &TypeSchema{
+						IsArray:     isArray,
+						Type:        ARRAY,
+						ArraySchema: schema,
+					}
+				} else {
+					schemaA.Properties[keyVal[0]] = schema //data=xx
+					// props[keyVal[0]] = *schema
+				}
 			}
 
 		}
 	}
-	// fmt.Printf("props: %+v\n", props)
-	// if len(props) == 0 {
-	// 	return schema, nil
-	// }
-	fmt.Printf("parseCombinedObject2 schema=%+v\n", schemaA)
-	fmt.Println(schemaA.Properties["data"])
 	return schemaA, nil
-
-	// return spec.ComposedSchema(*schema, spec.Schema{
-	// 	SchemaProps: spec.SchemaProps{
-	// 		Type:       []string{OBJECT},
-	// 		Properties: props,
-	// 	},
-	// }), nil
 }
 
 func isReplaceValue(val string) bool {
