@@ -29,9 +29,12 @@ type RegisterResponse struct {
 //@title 用户注册接口
 //@group account
 //@request RegisterRequest
+//@header x-request-id string false "request id"
+//@query from string false "test"
 //@response 200 common.Response{code=0,msg="success",data=RegisterResponse} "注册成功返回数据"
 //@response 200 common.Response{code=10011,msg="password format error"} "密码格式错误"
 //@author alovn
+//@desc 用户注册接口说明
 func (h *AccountHandler) Register(w http.ResponseWriter, r *http.Request) {
 	res := common.NewResponse(200, "注册成功", &RegisterResponse{
 		Username:   "abc",

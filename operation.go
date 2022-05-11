@@ -14,6 +14,8 @@ var (
 	requestPattern  = regexp.MustCompile(`([\w\-.\\\[\]]+)\s*(.*)?`)
 	// ResponseType{data1=Type1,data2=Type2}.
 	combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]+){(.*)}$`)
+	// requestId string true "comment"
+	paramPattern = regexp.MustCompile(`(\S+)\s+([\S.]+)\s+(\w+)\s+"([^"]+)"`)
 )
 
 // Operation describes a single API operation on a path.
@@ -68,7 +70,9 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		return operation.ParseRequestComment(lineRemainder, astFile)
 	case successAttr, failureAttr, responseAttr:
 		return operation.ParseResponseComment(lineRemainder, astFile)
-	case deprecatedAttr:
+	case headerAttr, queryAttr, paramAttr, formAttr:
+		return operation.ParseParametersComment(strings.TrimPrefix(lowerAttribute, "@"), lineRemainder, astFile)
+	case deprecatedAttr, "deprecated:":
 		operation.Deprecated = true
 	}
 
@@ -137,22 +141,47 @@ func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast
 		for _, p := range schema.Properties {
 			for pMode, pName := range p.Tags {
 				if param, ok := operation.Requests.Parameters[pName]; ok {
-					param.modes = append(param.modes, pMode)
+					param.parameterTypes = append(param.parameterTypes, pMode)
 				} else {
 					operation.Requests.Parameters[pName] = &ApiParameterSpec{
-						Name:        pName,
-						Required:    p.Required,
-						Description: p.Comment,
-						Validate:    p.Validate,
-						Example:     p.Example,
-						modes:       []string{pMode},
-						Type:        p.Type,
+						Name:           pName,
+						Required:       p.Required,
+						Description:    p.Comment,
+						Validate:       p.Validate,
+						Example:        p.Example,
+						parameterTypes: []string{pMode},
+						DataType:       p.Type,
 					}
 				}
 			}
 		}
 		return nil
 	}
+}
+
+//ParseParametersComment parses parameters (@header, @param, @query, @form)
+//@param [name] [type] [required] [comment]
+//@query demo int true "测试参数"
+func (operation *Operation) ParseParametersComment(parameterType, commentLine string, astFile *ast.File) error {
+	matches := paramPattern.FindStringSubmatch(commentLine)
+	if len(matches) != 5 {
+		return fmt.Errorf("missing required param comment parameters \"%s\"", commentLine)
+	}
+	name := matches[1]
+	dataType := matches[2]
+	required := strings.ToLower(matches[3]) == "true"
+	description := matches[4]
+	if _, ok := operation.Requests.Parameters[name]; !ok {
+		operation.Requests.Parameters[name] = &ApiParameterSpec{
+			Name:        name,
+			DataType:    dataType,
+			Required:    required,
+			Description: description,
+			// Example:        getExampleValue(dataType, ""),
+			parameterTypes: []string{parameterType},
+		}
+	}
+	return nil
 }
 
 // ParseResponseComment parses comment for given `response` comment string.

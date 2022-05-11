@@ -6,20 +6,24 @@
 
 ### 用户注册接口
 
+用户注册接口说明
+
 author: _alovn_
 
 ```text
 POST /user/account/register
 ```
 
-**Request**:
+__Request__:
 
-parameters|modes|type|required|validate|example|description
+parameter|parameterType|dataType|required|validate|example|description
 --|--|--|--|--|--|--
-**password**|_form_|string|true|required|"abc"|密码
-**username**|_form_|string|true|required|"abc"|用户名
+__from__|_query_|string|false|||test
+__password__|_form_|string|true|required|"abc"|密码
+__username__|_form_|string|true|required|"abc"|用户名
+__x-request-id__|_header_|string|false|||request id
 
-**Response**:
+__Response__:
 
 ```json
 // StatusCode: 200 注册成功返回数据
@@ -42,6 +46,8 @@ parameters|modes|type|required|validate|example|description
 }
 ```
 
+---
+
 ### 用户登录接口
 
 author: _alovn_
@@ -50,15 +56,15 @@ author: _alovn_
 POST /user/account/login
 ```
 
-**Request**:
+__Request__:
 
-parameters|modes|type|required|validate|example|description
+parameter|parameterType|dataType|required|validate|example|description
 --|--|--|--|--|--|--
-**password**|_form_|string|true|required|"abc"|登录密码
-**username**|_form_|string|true|required|"abc"|登录用户名
-**validate_code**|_form_|string|false||"abc"|验证码
+__password__|_form_|string|true|required|"abc"|登录密码
+__username__|_form_|string|true|required|"abc"|登录用户名
+__validate_code__|_form_|string|false||"abc"|验证码
 
-**Response**:
+__Response__:
 
 ```json
 // StatusCode: 200 登录成功返回数据
@@ -78,3 +84,5 @@ parameters|modes|type|required|validate|example|description
   "msg": "password_error",  //string, 返回消息
 }
 ```
+
+---

@@ -12,9 +12,7 @@ author: _alovn_
 GET /user/profile/get
 ```
 
-
-
-**Response**:
+__Response__:
 
 ```json
 // StatusCode: 200 
@@ -30,3 +28,5 @@ GET /user/profile/get
   "msg": "success"  //string, 返回消息
 }
 ```
+
+---

@@ -50,18 +50,18 @@ type ApiRequestSpec struct {
 }
 
 type ApiParameterSpec struct {
-	Name        string
-	Type        string
-	Required    bool
-	Description string
-	Validate    string
-	Example     string
-	modes       []string
+	Name           string
+	DataType       string
+	Required       bool
+	Description    string
+	Validate       string
+	Example        string
+	parameterTypes []string
 }
 
-func (p ApiParameterSpec) Modes() string {
+func (p ApiParameterSpec) ParameterTypes() string {
 	s := ""
-	for i, m := range p.modes {
+	for i, m := range p.parameterTypes {
 		if i == 0 {
 			s += m
 		} else {

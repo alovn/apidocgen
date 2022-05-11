@@ -12,14 +12,14 @@ author: _alovn_
 POST /user/address/create
 ```
 
-**Request**:
+__Request__:
 
-parameters|modes|type|required|validate|example|description
+parameter|parameterType|dataType|required|validate|example|description
 --|--|--|--|--|--|--
-**address**|_form_|string|true|required|"abc"|地址
-**city_id**|_form_|int64|true|required|123|城市ID
+__address__|_form_|string|true|required|"abc"|地址
+__city_id__|_form_|int64|true|required|123|城市ID
 
-**Response**:
+__Response__:
 
 ```json
 // StatusCode: 200 
@@ -28,6 +28,8 @@ parameters|modes|type|required|validate|example|description
   "msg": "success",  //string, 返回消息
 }
 ```
+
+---
 
 ### 更新地址接口
 
@@ -37,14 +39,14 @@ author: _alovn_
 POST /user/address/update
 ```
 
-**Request**:
+__Request__:
 
-parameters|modes|type|required|validate|example|description
+parameter|parameterType|dataType|required|validate|example|description
 --|--|--|--|--|--|--
-**address**|_form_|string|true|required|"abc"|地址
-**id**|_form_|int64|true|required|123|地址ID
+__address__|_form_|string|true|required|"abc"|地址
+__id__|_form_|int64|true|required|123|地址ID
 
-**Response**:
+__Response__:
 
 ```json
 // StatusCode: 200 
@@ -53,6 +55,8 @@ parameters|modes|type|required|validate|example|description
   "msg": "success",  //string, 返回消息
 }
 ```
+
+---
 
 ### 删除地址接口
 
@@ -62,13 +66,13 @@ author: _alovn_
 POST /user/address/delete
 ```
 
-**Request**:
+__Request__:
 
-parameters|modes|type|required|validate|example|description
+parameter|parameterType|dataType|required|validate|example|description
 --|--|--|--|--|--|--
-**id**|_form_|int64|true|required|123|地址ID
+__id__|_form_|int64|true|required|123|地址ID
 
-**Response**:
+__Response__:
 
 ```json
 // StatusCode: 200 
@@ -78,6 +82,8 @@ parameters|modes|type|required|validate|example|description
 }
 ```
 
+---
+
 ### 获取地址信息
 
 author: _alovn_
@@ -86,13 +92,13 @@ author: _alovn_
 GET /user/address/get/:id
 ```
 
-**Request**:
+__Request__:
 
-parameters|modes|type|required|validate|example|description
+parameter|parameterType|dataType|required|validate|example|description
 --|--|--|--|--|--|--
-**id**|_param_|int64|false||123|地址ID
+__id__|_param_|int64|false||123|地址ID
 
-**Response**:
+__Response__:
 
 ```json
 // StatusCode: 200 
@@ -107,7 +113,13 @@ parameters|modes|type|required|validate|example|description
 }
 ```
 
+---
+
 ### 获取地址列表
+
+___Deprecated___
+
+获取收货地址列表
 
 author: _alovn_
 
@@ -115,9 +127,7 @@ author: _alovn_
 GET /user/address/list
 ```
 
-
-
-**Response**:
+__Response__:
 
 ```json
 // StatusCode: 200 
@@ -133,3 +143,5 @@ GET /user/address/list
   "msg": "success"  //string, 返回消息
 }
 ```
+
+---
