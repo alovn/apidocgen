@@ -92,6 +92,8 @@ func (h *AddressHandler) Get(w http.ResponseWriter, r *http.Request) {
 //@group address
 //@response 200 common.Response{code=0,msg="success",data=[]AddressResponse}
 //@author alovn
+//@desc 获取收货地址列表
+// Deprecated: or use @deprecated
 func (h *AddressHandler) List(w http.ResponseWriter, r *http.Request) {
 	addresses := []AddressResponse{}
 	res := common.NewResponse(200, "删除成功", addresses)
