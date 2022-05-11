@@ -186,7 +186,6 @@ func (operation *Operation) ParseParametersComment(parameterType, commentLine st
 
 // ParseResponseComment parses comment for given `response` comment string.
 func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File) error {
-	operation.parser.clearStructStack()
 	matches := responsePattern.FindStringSubmatch(commentLine)
 	if len(matches) != 4 && len(matches) != 3 {
 		return nil

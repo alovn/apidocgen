@@ -54,8 +54,6 @@ type Parser struct {
 	packages *PackagesDefinitions
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]struct{}
-	// structStack stores full names of the structures that were already parsed or are being parsed now
-	structStack []*TypeSpecDef
 }
 
 func New() *Parser {
@@ -400,20 +398,6 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.
 	return schema, nil
 }
 
-func (parser *Parser) isInStructStack(typeSpecDef *TypeSpecDef) bool {
-	for _, specDef := range parser.structStack {
-		if typeSpecDef == specDef {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (parser *Parser) clearStructStack() {
-	parser.structStack = parser.structStack[:0]
-}
-
 // ParseDefinition parses given type spec that corresponds to the type under
 // given name and package
 func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field, parentSchema *TypeSchema) (*TypeSchema, error) {
@@ -432,8 +416,6 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field
 			Parent:    parentSchema,
 		}, nil
 	}
-
-	parser.structStack = append(parser.structStack, typeSpecDef)
 
 	fmt.Printf("Generating %s\n", typeName)
 

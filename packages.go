@@ -2,14 +2,14 @@ package apidoc
 
 import (
 	"go/ast"
-	goparser "go/parser"
 	"go/token"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	"golang.org/x/tools/go/loader"
+	"golang.org/x/tools/go/packages"
+	// "golang.org/x/tools/go/loader"
 )
 
 type PackagesDefinitions struct {
@@ -264,22 +264,36 @@ func (pkgDefs *PackagesDefinitions) loadExternalPackage(importPath string) error
 	if err != nil {
 		return err
 	}
+	// conf := loader.Config{
+	// 	ParserMode: goparser.ParseComments,
+	// 	Cwd:        cwd,
+	// }
+	// conf.Import(importPath)
+	// loaderProgram, err := conf.Load()
+	// if err != nil {
+	// 	return err
+	// }
 
-	conf := loader.Config{
-		ParserMode: goparser.ParseComments,
-		Cwd:        cwd,
+	// for _, info := range loaderProgram.AllPackages {
+	// 	pkgPath := strings.TrimPrefix(info.Pkg.Path(), "vendor/")
+	// 	for _, astFile := range info.Files {
+	// 		pkgDefs.parseTypesFromFile(astFile, pkgPath)
+	// 	}
+	// }
+
+	conf := packages.Config{
+		Mode: packages.NeedFiles | packages.NeedSyntax | packages.NeedImports | packages.NeedName,
+		Dir:  cwd,
 	}
 
-	conf.Import(importPath)
-
-	loaderProgram, err := conf.Load()
+	pkgs, err := packages.Load(&conf, importPath)
 	if err != nil {
 		return err
 	}
 
-	for _, info := range loaderProgram.AllPackages {
-		pkgPath := strings.TrimPrefix(info.Pkg.Path(), "vendor/")
-		for _, astFile := range info.Files {
+	for _, pkg := range pkgs {
+		pkgPath := strings.TrimPrefix(pkg.PkgPath, "vendor/")
+		for _, astFile := range pkg.Syntax {
 			pkgDefs.parseTypesFromFile(astFile, pkgPath)
 		}
 	}
