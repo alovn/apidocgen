@@ -37,24 +37,31 @@ func (g *Gen) Build() error {
 		return err
 	}
 	doc := p.GetApiDoc()
+	if doc.Title == "" && doc.Service == "" && len(doc.Apis) == 0 {
+		fmt.Println("can't find apis")
+		return nil
+	}
+
+	if len(doc.Apis) > 0 {
+		doc.Groups = append(doc.Groups, &apidoc.ApiGroupSpec{
+			Group:       "ungrouped",
+			Title:       "ungrouped",
+			Description: "Ungrouped apis",
+			Apis:        doc.Apis,
+		})
+	}
+
 	if err := os.MkdirAll(g.c.OutputDir, os.ModePerm); err != nil {
 		return err
 	}
 
+	funcMap := template.FuncMap{
+		"add": func(a, b int) int {
+			return a + b
+		},
+	}
+
 	if g.c.IsGenGroupFile {
-		funcMap := template.FuncMap{
-			"add": func(a, b int) int {
-				return a + b
-			},
-		}
-		if len(doc.Apis) > 0 {
-			doc.Groups = append(doc.Groups, &apidoc.ApiGroupSpec{
-				Group:       "ungrouped",
-				Title:       "ungrouped apis",
-				Description: "Ungrouped apis",
-				Apis:        doc.Apis,
-			})
-		}
 		//group
 		t := template.New("group").Funcs(funcMap)
 		t, err := t.Parse(groupApisTemplate)
@@ -94,7 +101,7 @@ func (g *Gen) Build() error {
 		return nil
 	}
 
-	t := template.New("apis-single")
+	t := template.New("apis-single").Funcs(funcMap)
 	t, err := t.Parse(singleApisTemplate)
 	if err != nil {
 		return err
@@ -110,5 +117,6 @@ func (g *Gen) Build() error {
 	if err = t.Execute(f, doc); err != nil {
 		return err
 	}
+	fmt.Println("generated: README.md")
 	return nil
 }

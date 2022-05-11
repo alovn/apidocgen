@@ -369,12 +369,12 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.
 			Comment:     strings.TrimSuffix(field.Comment.Text(), "\n"),
 			FullName:    name,
 			Type:        typeName,
-			Example:     getFieldExample(typeName, field),
 			IsOmitempty: isOmitempty,
 			Validate:    getValidateTagValue(field),
 			Tags:        getParameterTags(field),
 			Required:    getRequiredTagValue(field),
 			Parent:      parentSchema,
+			TagValue:    getAllTagValue(field),
 		}, nil
 	}
 
@@ -411,7 +411,6 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field
 			FieldName: refTypeName,
 			FullName:  typeName,
 			Type:      OBJECT,
-			Example:   NULL,
 			PkgPath:   typeSpecDef.PkgPath,
 			Parent:    parentSchema,
 		}, nil
@@ -436,7 +435,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field
 	case *ast.MapType:
 		if keyIdent, ok := expr.Key.(*ast.Ident); ok {
 			if IsGolangPrimitiveType(keyIdent.Name) {
-				example := getFieldExample(keyIdent.Name, nil)
+				example := getFieldExample(keyIdent.Name, nil) //map key example
 				if _, ok := expr.Value.(*ast.InterfaceType); ok {
 					return &TypeSchema{Type: OBJECT, Properties: nil}, nil
 				}
@@ -475,9 +474,8 @@ func (parser *Parser) parseTypeExpr(file *ast.File, field *ast.Field, typeExpr a
 	// type Foo interface{}
 	case *ast.InterfaceType:
 		return &TypeSchema{
-			Type:    ANY,
-			Example: "null",
-			Parent:  parentSchema,
+			Type:   ANY,
+			Parent: parentSchema,
 		}, nil
 
 	// type Foo struct {...}
@@ -503,12 +501,12 @@ func (parser *Parser) parseTypeExpr(file *ast.File, field *ast.Field, typeExpr a
 		if err != nil {
 			return nil, err
 		}
-		return &TypeSchema{Type: "array", IsArray: true, ArraySchema: itemSchema, Parent: parentSchema}, nil
+		return &TypeSchema{Type: "array", ArraySchema: itemSchema, Parent: parentSchema}, nil
 	// type Foo map[string]Bar
 	case *ast.MapType:
 		if keyIdent, ok := expr.Key.(*ast.Ident); ok {
 			if IsGolangPrimitiveType(keyIdent.Name) {
-				example := getFieldExample(keyIdent.Name, nil)
+				example := getFieldExample(keyIdent.Name, nil) //map key example
 				if _, ok := expr.Value.(*ast.InterfaceType); ok {
 					return &TypeSchema{Type: OBJECT, Properties: nil}, nil
 				}
@@ -560,6 +558,7 @@ func (parser *Parser) parseStruct(typeSpecDef *TypeSpecDef, file *ast.File, fiel
 		isOmitempty, fieldName := getFieldName(field.Names[0].Name, field, "json")
 		schema.FieldName = fieldName
 		schema.IsOmitempty = isOmitempty
+		schema.TagValue = getAllTagValue(field)
 		structSchema.Properties[schema.FieldName] = schema
 	}
 	return structSchema, nil
@@ -571,62 +570,4 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field, parentS
 		return nil, nil
 	}
 	return parser.parseTypeExpr(file, field, field.Type, parentSchama)
-	// isArray, typeName, err := getFieldType(field.Type)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if isArray {
-	// 	parser.clearStructStack() //warning
-	// 	schema, err := parser.getTypeSchema(typeName, file, field, false)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	fmt.Println("arrayschema", schema.Name)
-	// 	return &TypeSchema{
-	// 		IsArray:     isArray,
-	// 		Type:        ARRAY,
-	// 		ArraySchema: schema,
-	// 	}, nil
-	// 	// return schema, nil
-	// } else {
-	// 	schema, err := parser.getTypeSchema(typeName, file, field, false)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	return schema, nil
-	// }
 }
-
-// func getFieldType(field ast.Expr) (isArray bool, typeName string, err error) {
-// 	switch fieldType := field.(type) {
-// 	case *ast.Ident:
-// 		return false, fieldType.Name, nil
-// 	case *ast.SelectorExpr:
-// 		isArray, packageName, err := getFieldType(fieldType.X)
-// 		if err != nil {
-// 			return false, "", err
-// 		}
-
-// 		return isArray, fullTypeName(packageName, fieldType.Sel.Name), nil
-// 	case *ast.StarExpr:
-// 		isArray, fullName, err := getFieldType(fieldType.X)
-// 		if err != nil {
-// 			return false, "", err
-// 		}
-
-// 		return isArray, fullName, nil
-// 	case *ast.InterfaceType:
-// 		return false, ANY, nil
-// 	case *ast.ArrayType:
-// 		isArray, arrayType, err := getFieldType(fieldType.Elt)
-// 		if err != nil {
-// 			return false, "", err
-// 		}
-// 		if isArray {
-// 			return true, arrayType, fmt.Errorf("unsurport field type [][]" + arrayType)
-// 		}
-// 		return true, arrayType, nil
-// 	default:
-// 		return false, "", fmt.Errorf("unknown field type %#v", field)
-// 	}
-// }

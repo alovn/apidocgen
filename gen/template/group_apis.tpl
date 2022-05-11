@@ -1,11 +1,16 @@
 # {{.Title}}
+{{- if .Description}}
 
 {{.Description}}
+{{- end}}
+{{range $k,$api := $.Apis}}
+{{add $k 1}} [{{$api.Title}}](#{{add $k 1}}-{{$api.Title}}) {{- if $api.Deprecated}}(Deprecated){{end}}
+{{- end}}
 
 ## apis
 {{- range $k,$v := .Apis}}
 
-### {{$v.Title}}
+### {{add $k 1}}. {{$v.Title}}
 
 {{- if $v.Deprecated}}
 

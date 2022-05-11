@@ -82,20 +82,20 @@ type ApiResponseSpec struct {
 type TypeSchema struct {
 	Name        string //xxRequest, xxResponse
 	FieldName   string
-	Type        string //int, string, bool, object, array
+	Type        string //int, string, bool, object, array, any
 	FullName    string
 	PkgPath     string
 	Required    bool
 	Comment     string
-	Example     string //example value
-	IsArray     bool
 	ArraySchema *TypeSchema
 	Properties  map[string]*TypeSchema //object
 	IsOmitempty bool
 	Validate    string
 	Tags        map[string]string
-	typeSpecDef *TypeSpecDef
 	Parent      *TypeSchema
+	TagValue    string
+	typeSpecDef *TypeSpecDef
+	example     string //example value
 }
 
 func (s *TypeSchema) JSON() string {
@@ -130,7 +130,7 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 		sort.Strings(keys)
 		for _, k := range keys {
 			v := s.Properties[k]
-			if v.IsOmitempty && v.Example == "null" { //omitempty
+			if v.IsOmitempty && v.ExampleValue() == NULL { //omitempty
 				continue
 			}
 			sb.WriteString(fmt.Sprintf(prefix2+"\"%s\": ", k)) //write key
@@ -148,7 +148,7 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 		}
 		sb.WriteString(prefix + "}")
 
-	} else if s.IsArray && s.Type == ARRAY && s.ArraySchema != nil {
+	} else if s.Type == ARRAY && s.ArraySchema != nil {
 		if isNewLine {
 			sb.WriteString(prefix + "[")
 		} else {
@@ -156,15 +156,16 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 		}
 		sb.WriteString(fmt.Sprintf("  //%s", s.buildComment()))
 		sb.WriteString("\n")
-		s.ArraySchema.parseJSON(depth+1, sb, true)
+		if s.ArraySchema.ExampleValue() != NULL {
+			s.ArraySchema.parseJSON(depth+1, sb, true)
+		}
 		sb.WriteString("\n")
-
 		sb.WriteString(prefix + "]")
 	} else { // write example value
 		if isNewLine {
-			sb.WriteString(prefix + s.Example)
+			sb.WriteString(prefix + s.ExampleValue())
 		} else {
-			sb.WriteString(s.Example)
+			sb.WriteString(s.ExampleValue())
 		}
 	}
 }
@@ -174,7 +175,7 @@ func (v *TypeSchema) buildComment() string {
 		return ""
 	}
 	s := ""
-	if v.IsArray {
+	if v.Type == ARRAY {
 		arrayName := v.ArraySchema.Type //int
 		if v.ArraySchema.Type == OBJECT {
 			arrayName = v.ArraySchema.FullName
@@ -204,6 +205,43 @@ func (v *TypeSchema) isInTypeChain(typeSpecDef *TypeSpecDef) bool {
 		return v.Parent.isInTypeChain(typeSpecDef)
 	}
 	return false
+}
+
+func (v *TypeSchema) GetJSONKey() (key string, isOmitempty bool) {
+	if v.TagValue == "" {
+		return "", false
+	}
+
+	tag := reflect.StructTag(v.TagValue)
+	tagValue, has := tag.Lookup("json")
+	if has {
+		key = strings.Split(tagValue, ",")[0]
+		isOmitempty = strings.Contains(tagValue, "omitempty")
+		return
+	} else {
+		key = v.Name
+		isOmitempty = false
+		return
+	}
+}
+
+func (v *TypeSchema) ExampleValue() string {
+	if v.Type == ARRAY && v.ArraySchema == nil {
+		return NULL
+	}
+	if v.Type == OBJECT && (v.Properties == nil || len(v.Properties) == 0) {
+		return NULL
+	}
+	if v.example != "" {
+		return v.example
+	}
+	example := ""
+	tag := reflect.StructTag(v.TagValue)
+	if val, ok := tag.Lookup("example"); ok {
+		example = val
+	}
+	v.example = getExampleValue(v.Type, example)
+	return v.example
 }
 
 func getFieldExample(typeName string, field *ast.Field) string {
@@ -301,13 +339,18 @@ func getFieldName(name string, field *ast.Field, format string) (isOmitempty boo
 }
 
 func getTagValue(tagName string, field *ast.Field) (tagValue string, has bool) {
-	if field != nil {
-		if field.Tag != nil && field.Tag.Value != "" {
-			tag := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", ""))
-			return tag.Lookup(tagName)
-		}
+	if field != nil && field.Tag != nil && field.Tag.Value != "" {
+		tag := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", ""))
+		return tag.Lookup(tagName)
 	}
 	return
+}
+
+func getAllTagValue(field *ast.Field) string {
+	if field != nil && field.Tag != nil && field.Tag.Value != "" {
+		return strings.ReplaceAll(field.Tag.Value, "`", "")
+	}
+	return ""
 }
 
 func getValidateTagValue(field *ast.Field) (validate string) {

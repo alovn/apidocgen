@@ -15,7 +15,7 @@ func main() {
 
 	//@group account
 	//@title 账户相关
-	//@desc 账户相关的接口
+	//@desc 账户相关的接口，含用户注册、登录等
 	{
 		account := handler.NewAccountHandler()
 		mux.HandleFunc("/user/account/register", account.Register)
@@ -37,8 +37,16 @@ func main() {
 	//@title 资料管理
 	//@desc 用户资料管理接口
 	{
-		profile := handler.NewAProfileHandler()
+		profile := handler.NewProfileHandler()
 		mux.HandleFunc("/user/profile/get", profile.Get)
+	}
+
+	//@group menu
+	//@title 菜单管理
+	//@desc 菜单管理接口
+	{
+		menu := handler.NewMenuHandler()
+		mux.HandleFunc("/user/menu/nodes", menu.Nodes)
 	}
 
 	_ = http.ListenAndServe(":8000", mux)

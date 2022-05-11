@@ -1,10 +1,13 @@
 # 账户相关
 
-账户相关的接口
+账户相关的接口，含用户注册、登录等
+
+1 [用户注册接口](#1-用户注册接口)
+2 [用户登录接口](#2-用户登录接口)
 
 ## apis
 
-### 用户注册接口
+### 1. 用户注册接口
 
 用户注册接口说明
 
@@ -19,8 +22,8 @@ __Request__:
 parameter|parameterType|dataType|required|validate|example|description
 --|--|--|--|--|--|--
 __from__|_query_|string|false|||test
-__password__|_form_|string|true|required|"abc"|密码
-__username__|_form_|string|true|required|"abc"|用户名
+__password__|_form_|string|true|required||密码
+__username__|_form_|string|true|required||用户名
 __x-request-id__|_header_|string|false|||request id
 
 __Response__:
@@ -48,7 +51,7 @@ __Response__:
 
 ---
 
-### 用户登录接口
+### 2. 用户登录接口
 
 author: _alovn_
 
@@ -60,9 +63,9 @@ __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
 --|--|--|--|--|--|--
-__password__|_form_|string|true|required|"abc"|登录密码
-__username__|_form_|string|true|required|"abc"|登录用户名
-__validate_code__|_form_|string|false||"abc"|验证码
+__password__|_form_|string|true|required||登录密码
+__username__|_form_|string|true|required||登录用户名
+__validate_code__|_form_|string|false|||验证码
 
 __Response__:
 

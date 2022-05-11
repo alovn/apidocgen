@@ -9,7 +9,11 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}/cmd/apidoc/main.go"
+            "program": "${workspaceFolder}/cmd/apidoc/main.go",
+            "args": [
+                "--dir", "../../examples/svc-user/",
+                "--output", "../../examples/docs"
+            ]
         }
     ]
 }

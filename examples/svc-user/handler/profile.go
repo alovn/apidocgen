@@ -5,7 +5,7 @@ import "net/http"
 type ProfileHandler struct {
 }
 
-func NewAProfileHandler() *ProfileHandler {
+func NewProfileHandler() *ProfileHandler {
 	return &ProfileHandler{}
 }
 

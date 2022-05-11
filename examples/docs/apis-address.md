@@ -2,9 +2,15 @@
 
 收货地址管理接口
 
+1 [添加地址接口](#1-添加地址接口)
+2 [更新地址接口](#2-更新地址接口)
+3 [删除地址接口](#3-删除地址接口)
+4 [获取地址信息](#4-获取地址信息)
+5 [获取地址列表](#5-获取地址列表)(Deprecated)
+
 ## apis
 
-### 添加地址接口
+### 1. 添加地址接口
 
 author: _alovn_
 
@@ -16,8 +22,8 @@ __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
 --|--|--|--|--|--|--
-__address__|_form_|string|true|required|"abc"|地址
-__city_id__|_form_|int64|true|required|123|城市ID
+__address__|_form_|string|true|required||地址
+__city_id__|_form_|int64|true|required||城市ID
 
 __Response__:
 
@@ -31,7 +37,7 @@ __Response__:
 
 ---
 
-### 更新地址接口
+### 2. 更新地址接口
 
 author: _alovn_
 
@@ -43,8 +49,8 @@ __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
 --|--|--|--|--|--|--
-__address__|_form_|string|true|required|"abc"|地址
-__id__|_form_|int64|true|required|123|地址ID
+__address__|_form_|string|true|required||地址
+__id__|_form_|int64|true|required||地址ID
 
 __Response__:
 
@@ -58,7 +64,7 @@ __Response__:
 
 ---
 
-### 删除地址接口
+### 3. 删除地址接口
 
 author: _alovn_
 
@@ -70,7 +76,7 @@ __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
 --|--|--|--|--|--|--
-__id__|_form_|int64|true|required|123|地址ID
+__id__|_form_|int64|true|required||地址ID
 
 __Response__:
 
@@ -84,7 +90,7 @@ __Response__:
 
 ---
 
-### 获取地址信息
+### 4. 获取地址信息
 
 author: _alovn_
 
@@ -96,7 +102,7 @@ __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
 --|--|--|--|--|--|--
-__id__|_param_|int64|false||123|地址ID
+__id__|_param_|int64|false|||地址ID
 
 __Response__:
 
@@ -115,7 +121,7 @@ __Response__:
 
 ---
 
-### 获取地址列表
+### 5. 获取地址列表
 
 ___Deprecated___
 

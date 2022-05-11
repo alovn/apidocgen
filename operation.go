@@ -148,7 +148,6 @@ func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast
 						Required:       p.Required,
 						Description:    p.Comment,
 						Validate:       p.Validate,
-						Example:        p.Example,
 						parameterTypes: []string{pMode},
 						DataType:       p.Type,
 					}
@@ -173,11 +172,10 @@ func (operation *Operation) ParseParametersComment(parameterType, commentLine st
 	description := matches[4]
 	if _, ok := operation.Requests.Parameters[name]; !ok {
 		operation.Requests.Parameters[name] = &ApiParameterSpec{
-			Name:        name,
-			DataType:    dataType,
-			Required:    required,
-			Description: description,
-			// Example:        getExampleValue(dataType, ""),
+			Name:           name,
+			DataType:       dataType,
+			Required:       required,
+			Description:    description,
 			parameterTypes: []string{parameterType},
 		}
 	}
@@ -221,8 +219,10 @@ func (operation *Operation) parseObject(refType string, astFile *ast.File) (*Typ
 	switch {
 	case IsGolangPrimitiveType(refType):
 		typeName := TransToValidSchemeType(refType) //example: int->interger
-		exampleValue := getExampleValue(refType, "")
-		return &TypeSchema{Name: refType, Type: typeName, Example: exampleValue}, nil
+		return &TypeSchema{
+			Name: refType,
+			Type: typeName,
+		}, nil
 	case strings.Contains(refType, "{"):
 		return operation.parseCombinedObject(refType, astFile)
 	default:
@@ -255,7 +255,7 @@ func (operation *Operation) parseCombinedObject(refType string, astFile *ast.Fil
 			// if is number or string wrap, replace it
 			if isReplaceValue(keyVal[1]) { //replace int,string, examples code or msg
 				if p, ok := schemaA.Properties[keyVal[0]]; ok {
-					p.Example = keyVal[1]
+					p.example = keyVal[1] //replace response code, msg
 				}
 			} else {
 				//check is array
@@ -271,7 +271,6 @@ func (operation *Operation) parseCombinedObject(refType string, astFile *ast.Fil
 				}
 				if isArray {
 					schemaA.Properties[keyVal[0]] = &TypeSchema{
-						IsArray:     isArray,
 						Type:        ARRAY,
 						ArraySchema: schema,
 					}
