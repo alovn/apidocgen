@@ -38,7 +38,6 @@ type ApiSpec struct {
 	Description string
 	Author      string
 	Deprecated  bool
-	Tags        []string
 	Group       string
 	Responses   []*ApiResponseSpec
 	Requests    ApiRequestSpec
@@ -80,22 +79,18 @@ type ApiResponseSpec struct {
 }
 
 type TypeSchema struct {
-	Name        string //xxRequest, xxResponse
-	FieldName   string
-	Type        string //int, string, bool, object, array, any
-	FullName    string
-	PkgPath     string
-	Required    bool
-	Comment     string
-	ArraySchema *TypeSchema
-	Properties  map[string]*TypeSchema //object
-	IsOmitempty bool
-	Validate    string
-	Tags        map[string]string
-	Parent      *TypeSchema
-	TagValue    string
-	typeSpecDef *TypeSpecDef
-	example     string //example value
+	Name          string //xxRequest, xxResponse
+	Type          string //int, string, bool, object, array, any
+	FullName      string
+	PkgPath       string
+	Comment       string
+	ArraySchema   *TypeSchema
+	Properties    map[string]*TypeSchema //object
+	Parent        *TypeSchema
+	TagValue      string
+	typeSpecDef   *TypeSpecDef
+	example       string //example value
+	parameterTags map[string]string
 }
 
 func (s *TypeSchema) JSON() string {
@@ -112,7 +107,7 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 		prefix += "  "
 	}
 
-	if s.Type == OBJECT && s.Properties != nil {
+	if s.Type == OBJECT && s.Properties != nil && len(s.Properties) > 0 {
 		if isNewLine {
 			sb.WriteString(prefix + "{")
 		} else {
@@ -128,12 +123,17 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
+		//build json
 		for _, k := range keys {
 			v := s.Properties[k]
-			if v.IsOmitempty && v.ExampleValue() == NULL { //omitempty
+			key, isOmitempty := v.JSONKey()
+			if isOmitempty && v.ExampleValue() == NULL { //omitempty
 				continue
 			}
-			sb.WriteString(fmt.Sprintf(prefix2+"\"%s\": ", k)) //write key
+			if v.parameterTags != nil && !v.HasJSONTag() {
+				continue
+			}
+			sb.WriteString(fmt.Sprintf(prefix2+"\"%s\": ", key)) //write key
 			v.parseJSON(depth+1, sb, false)
 			haxNext := i < len(s.Properties)-1
 			if haxNext {
@@ -162,6 +162,9 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 		sb.WriteString("\n")
 		sb.WriteString(prefix + "]")
 	} else { // write example value
+		if depth == 0 {
+			sb.WriteString(fmt.Sprintf("//%s\n", s.buildComment()))
+		}
 		if isNewLine {
 			sb.WriteString(prefix + s.ExampleValue())
 		} else {
@@ -186,7 +189,7 @@ func (v *TypeSchema) buildComment() string {
 	} else {
 		s += v.Type
 	}
-	if v.Required {
+	if v.IsRequired() {
 		s += ", required"
 	}
 	if len(v.Comment) > 0 {
@@ -207,22 +210,25 @@ func (v *TypeSchema) isInTypeChain(typeSpecDef *TypeSpecDef) bool {
 	return false
 }
 
-func (v *TypeSchema) GetJSONKey() (key string, isOmitempty bool) {
+func (v *TypeSchema) JSONKey() (key string, isOmitempty bool) {
 	if v.TagValue == "" {
-		return "", false
+		return v.Name, false
 	}
-
-	tag := reflect.StructTag(v.TagValue)
-	tagValue, has := tag.Lookup("json")
+	val, has := v.GetTag("json")
 	if has {
-		key = strings.Split(tagValue, ",")[0]
-		isOmitempty = strings.Contains(tagValue, "omitempty")
+		key = strings.Split(val, ",")[0]
+		isOmitempty = strings.Contains(val, "omitempty")
 		return
 	} else {
 		key = v.Name
 		isOmitempty = false
 		return
 	}
+}
+
+func (v *TypeSchema) HasJSONTag() bool {
+	_, has := v.GetTag("json")
+	return has
 }
 
 func (v *TypeSchema) ExampleValue() string {
@@ -236,12 +242,48 @@ func (v *TypeSchema) ExampleValue() string {
 		return v.example
 	}
 	example := ""
-	tag := reflect.StructTag(v.TagValue)
-	if val, ok := tag.Lookup("example"); ok {
+
+	if val, has := v.GetTag("example"); has {
 		example = val
 	}
-	v.example = getExampleValue(v.Type, example)
+	v.example = getTypeExample(v.Type, example)
 	return v.example
+}
+
+func (v *TypeSchema) GetTag(name string) (value string, has bool) {
+	tag := reflect.StructTag(v.TagValue)
+	return tag.Lookup(name)
+}
+
+func (v *TypeSchema) ParameterTags() map[string]string {
+	if v.parameterTags != nil {
+		return v.parameterTags
+	}
+	parameterTags := make(map[string]string)
+	keys := []string{"header", "param", "query", "form"}
+	for _, key := range keys {
+		if val, has := v.GetTag(key); has {
+			parameterTags[key] = val
+		}
+	}
+	v.parameterTags = parameterTags
+	return v.parameterTags
+}
+
+func (v *TypeSchema) IsRequired() (required bool) {
+	if val, has := v.GetTag("required"); has {
+		required, _ = strconv.ParseBool(val)
+	}
+	if !required {
+		validate := v.ValidateTag()
+		required = strings.Contains(validate, "required")
+	}
+	return
+}
+
+func (v *TypeSchema) ValidateTag() (validate string) {
+	validate, _ = v.GetTag("validate")
+	return
 }
 
 func getFieldExample(typeName string, field *ast.Field) string {
@@ -258,10 +300,10 @@ func getFieldExample(typeName string, field *ast.Field) string {
 			}
 		}
 	}
-	return getExampleValue(typeName, example)
+	return getTypeExample(typeName, example)
 }
 
-func getExampleValue(typeName, example string) string {
+func getTypeExample(typeName, example string) string {
 	switch typeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64", "byte":
 		return fmt.Sprintf("%d", exampleInt(example))
@@ -326,57 +368,9 @@ func exampleString(example string) string {
 	return example
 }
 
-//getFieldName format json/xml
-//getFiledName("abc", field, "json")
-func getFieldName(name string, field *ast.Field, format string) (isOmitempty bool, fieldName string) {
-	tagValue, has := getTagValue(format, field)
-	if has {
-		fieldName = strings.Split(tagValue, ",")[0]
-		isOmitempty = strings.Contains(tagValue, "omitempty")
-		return
-	}
-	return false, name
-}
-
-func getTagValue(tagName string, field *ast.Field) (tagValue string, has bool) {
-	if field != nil && field.Tag != nil && field.Tag.Value != "" {
-		tag := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", ""))
-		return tag.Lookup(tagName)
-	}
-	return
-}
-
 func getAllTagValue(field *ast.Field) string {
 	if field != nil && field.Tag != nil && field.Tag.Value != "" {
 		return strings.ReplaceAll(field.Tag.Value, "`", "")
 	}
 	return ""
-}
-
-func getValidateTagValue(field *ast.Field) (validate string) {
-	validate, _ = getTagValue("validate", field)
-	return
-}
-
-func getRequiredTagValue(field *ast.Field) (required bool) {
-	if val, has := getTagValue("required", field); has {
-		required, _ = strconv.ParseBool(val)
-	}
-	if !required {
-		validate := getValidateTagValue(field)
-		required = strings.Contains(validate, "required")
-	}
-	return
-}
-
-func getParameterTags(field *ast.Field) map[string]string {
-	parameters := make(map[string]string)
-
-	keys := []string{"header", "param", "query", "form"}
-	for _, key := range keys {
-		if val, has := getTagValue(key, field); has {
-			parameters[key] = val
-		}
-	}
-	return parameters
 }

@@ -15,8 +15,8 @@ func NewAccountHandler() *AccountHandler {
 }
 
 type RegisterRequest struct {
-	Username string `form:"username" validate:"required"` //用户名
-	Password string `form:"password" validate:"required"` //密码
+	Username string `form:"username" validate:"required" json:"username,omitempty"` //用户名
+	Password string `form:"password" validate:"required" json:"password,omitempty"` //密码
 } //注册请求参数
 
 type RegisterResponse struct {

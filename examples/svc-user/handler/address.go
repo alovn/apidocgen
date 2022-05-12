@@ -15,8 +15,8 @@ func NewAddressHandler() *AddressHandler {
 }
 
 type CreateAddressRequest struct {
-	CityID  int64  `form:"city_id" validate:"required"` //城市ID
-	Address string `form:"address" validate:"required"` //地址
+	CityID  int64  `form:"city_id" validate:"required" json:"city_id,omitempty"` //城市ID
+	Address string `form:"address" validate:"required" json:"address,omitempty"` //地址
 } //添加地址请求参数
 
 //@api POST /address/create

@@ -4,7 +4,7 @@
 {{.Description}}
 {{- end}}
 {{range $k,$api := $.Apis}}
-{{add $k 1}} [{{$api.Title}}](#{{add $k 1}}-{{$api.Title}}) {{- if $api.Deprecated}}(Deprecated){{end}}
+{{add $k 1}}. [{{$api.Title}}](#{{add $k 1}}-{{$api.Title}}) {{- if $api.Deprecated}}(Deprecated){{end}}
 {{- end}}
 
 ## apis
@@ -35,15 +35,26 @@ author: _{{$v.Author}}_
 __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
---|--|--|--|--|--|--{{range $p:= $v.Requests.Parameters}}
-__{{$p.Name}}__|_{{$p.ParameterTypes}}_|{{$p.DataType}}|{{$p.Required}}|{{$p.Validate}}|{{$p.Example}}|{{$p.Description}}{{end}}{{end}}
+--|--|--|--|--|--|--
+{{- range $p:= $v.Requests.Parameters}}
+__{{$p.Name}}__|_{{$p.ParameterTypes}}_|{{$p.DataType}}|{{$p.Required}}|{{$p.Validate}}|{{$p.Example}}|{{$p.Description}}
+{{- end}}
+{{- if $v.Requests.Body}}
+
+_body_:
+
+```javascript
+{{$v.Requests.Body}}
+```
+{{- end}}
+{{- end}}
 {{- if $v.Responses}}
 
 __Response__:
 {{- range $res := $v.Responses}}
 
-```json
-// StatusCode: {{$res.StatusCode}} {{$res.Description}}
+```javascript
+//StatusCode: {{$res.StatusCode}} {{$res.Description}}
 {{$res.Examples}}
 ```
 {{- end}}

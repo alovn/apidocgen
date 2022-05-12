@@ -49,5 +49,16 @@ func main() {
 		mux.HandleFunc("/user/menu/nodes", menu.Nodes)
 	}
 
+	//@group demo
+	//@title 测试示例
+	//@desc 其它一些示例演示
+	{
+		demo := handler.NewDemoHandler()
+		mux.HandleFunc("/user/demo/struct_array", demo.StructArray)
+		mux.HandleFunc("/user/demo/int_array", demo.IntArray)
+		mux.HandleFunc("/user/demo/map", demo.Map)
+		mux.HandleFunc("/user/demo/int", demo.Int)
+	}
+
 	_ = http.ListenAndServe(":8000", mux)
 }

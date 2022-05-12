@@ -2,8 +2,6 @@ package apidoc
 
 import (
 	"fmt"
-	"go/ast"
-	"strings"
 )
 
 const (
@@ -11,8 +9,6 @@ const (
 	ARRAY = "array"
 	// OBJECT represent a object value.
 	OBJECT = "object"
-	// PRIMITIVE represent a primitive value.
-	PRIMITIVE = "primitive"
 	// BOOLEAN represent a boolean value.
 	BOOLEAN = "boolean"
 	// INTEGER represent a integer value.
@@ -110,34 +106,4 @@ func IsGolangPrimitiveType(typeName string) bool {
 	}
 
 	return false
-}
-
-// TransToValidCollectionFormat determine valid collection format.
-func TransToValidCollectionFormat(format string) string {
-	switch format {
-	case "csv", "multi", "pipes", "tsv", "ssv":
-		return format
-	}
-
-	return ""
-}
-
-// TypeDocName get alias from comment '// @name ', otherwise the original type name to display in doc.
-func TypeDocName(pkgName string, spec *ast.TypeSpec) string {
-	if spec != nil {
-		if spec.Comment != nil {
-			for _, comment := range spec.Comment.List {
-				texts := strings.Split(strings.TrimSpace(strings.TrimLeft(comment.Text, "/")), " ")
-				if len(texts) > 1 && strings.ToLower(texts[0]) == "@name" {
-					return texts[1]
-				}
-			}
-		}
-
-		if spec.Name != nil {
-			return fullTypeName(strings.Split(pkgName, ".")[0], spec.Name.Name)
-		}
-	}
-
-	return pkgName
 }

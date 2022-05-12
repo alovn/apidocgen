@@ -1,13 +1,11 @@
 package apidoc
 
 import (
-	"fmt"
-	"regexp"
 	"testing"
 )
 
 func TestOperation_ParseMatchResponseComment(t *testing.T) {
-	responsePattern := regexp.MustCompile(`^(\d+)\s+([\w\.\d_]+\{.*\}|[\w\.\d_]+)[^"]*(.*)?`)
+	// responsePattern := regexp.MustCompile(`^(\d+)\s+([\w\.\d_]+\{.*\}|[\w\.\d_\[\]]+)[^"]*(.*)?`)
 	tests := []struct {
 		name        string
 		commentLine string
@@ -39,10 +37,22 @@ func TestOperation_ParseMatchResponseComment(t *testing.T) {
 			matches:     []string{"200", `common.Response{code=0,msg="success error",data=RegisterResponse}`, ""},
 		},
 		{
-			name:        "match response replace with descriptions",
+			name:        "match response replace with description",
 			commentLine: `200 common.Response{code=0,msg="success error",data=RegisterResponse} "成功返回"`,
 			wantLen:     4,
 			matches:     []string{"200", `common.Response{code=0,msg="success error",data=RegisterResponse}`, `"成功返回"`},
+		},
+		{
+			name:        "match response array",
+			commentLine: `200 []common.Response`,
+			wantLen:     4,
+			matches:     []string{"200", `[]common.Response`, ``},
+		},
+		{
+			name:        "match response array with description",
+			commentLine: `200 []common.Response "测试"`,
+			wantLen:     4,
+			matches:     []string{"200", `[]common.Response`, `"测试"`},
 		},
 	}
 	for _, tt := range tests {
@@ -50,9 +60,9 @@ func TestOperation_ParseMatchResponseComment(t *testing.T) {
 			matches := responsePattern.FindStringSubmatch(tt.commentLine)
 			matchesLen := len(matches)
 			if matchesLen != tt.wantLen {
-				for _, m := range matches {
-					fmt.Println(m)
-				}
+				// for _, m := range matches {
+				// 	fmt.Println(m)
+				// }
 
 				t.Errorf("%s len(matches) = %v, wantLen %v, matches = %v", t.Name(), matchesLen, tt.wantLen, matches)
 			}

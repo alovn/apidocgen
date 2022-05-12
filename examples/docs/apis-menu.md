@@ -2,7 +2,7 @@
 
 菜单管理接口
 
-1 [获取菜单节点](#1-获取菜单节点)
+1. [获取菜单节点](#1-获取菜单节点)
 
 ## apis
 
@@ -18,17 +18,17 @@ GET /user/menu/nodes
 
 __Response__:
 
-```json
-// StatusCode: 200 
+```javascript
+//StatusCode: 200 
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
   "data": [  //array[handler.Node]
     {  //object(handler.Node)
-      "id": 123,  //int64
-      "name": "abc",  //string
       "nodes": [  //array[handler.Node]
 
-      ]
+      ],
+      "id": 123,  //int64
+      "name": "abc"  //string
     }
   ],
   "msg": "success"  //string, 返回消息

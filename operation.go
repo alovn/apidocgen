@@ -10,7 +10,7 @@ import (
 
 var (
 	// 200 Response{data=Data} examples
-	responsePattern = regexp.MustCompile(`^(\d+)\s+([\w\.\d_]+\{.*\}|[\w\.\d_]+)[^"]*(.*)?`)
+	responsePattern = regexp.MustCompile(`^(\d+)\s+([\w\.\d_]+\{.*\}|[\w\.\d_\[\]]+)[^"]*(.*)?`)
 	requestPattern  = regexp.MustCompile(`([\w\-.\\\[\]]+)\s*(.*)?`)
 	// ResponseType{data1=Type1,data2=Type2}.
 	combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]+){(.*)}$`)
@@ -62,8 +62,6 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		operation.Accept = lineRemainder
 	case descriptionAttr:
 		operation.ParseDescriptionComment(lineRemainder)
-	case tagsAttr:
-		operation.ParseTagsComment(lineRemainder)
 	case apiAttr:
 		return operation.ParseRouterComment(lineRemainder)
 	case requestAttr:
@@ -87,13 +85,6 @@ func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
 		return
 	}
 	operation.Description += "\n" + lineRemainder
-}
-
-// ParseTagsComment parses comment for given `tag` comment string.
-func (operation *Operation) ParseTagsComment(commentLine string) {
-	for _, tag := range strings.Split(commentLine, ",") {
-		operation.Tags = append(operation.Tags, strings.TrimSpace(tag))
-	}
 }
 
 var routerPattern = regexp.MustCompile(`^(\w+)[[:blank:]](/[\w./\-{}+:$]*)`)
@@ -138,21 +129,31 @@ func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast
 		operation.Requests = ApiRequestSpec{
 			Parameters: map[string]*ApiParameterSpec{},
 		}
+		var parameterCount = 0
 		for _, p := range schema.Properties {
-			for pMode, pName := range p.Tags {
+			tags := p.ParameterTags()
+			if tags != nil {
+				if len(tags) > 0 && !p.HasJSONTag() {
+					parameterCount++
+				}
+			}
+			for pType, pName := range tags {
 				if param, ok := operation.Requests.Parameters[pName]; ok {
-					param.parameterTypes = append(param.parameterTypes, pMode)
+					param.parameterTypes = append(param.parameterTypes, pType)
 				} else {
 					operation.Requests.Parameters[pName] = &ApiParameterSpec{
 						Name:           pName,
-						Required:       p.Required,
+						Required:       p.IsRequired(),
 						Description:    p.Comment,
-						Validate:       p.Validate,
-						parameterTypes: []string{pMode},
+						Validate:       p.ValidateTag(),
+						parameterTypes: []string{pType},
 						DataType:       p.Type,
 					}
 				}
 			}
+		}
+		if parameterCount < len(schema.Properties) {
+			operation.Requests.Body = schema.JSON()
 		}
 		return nil
 	}
@@ -216,12 +217,26 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 }
 
 func (operation *Operation) parseObject(refType string, astFile *ast.File) (*TypeSchema, error) {
+	arrayFlag := "[]"
+	isArray := strings.HasPrefix(refType, arrayFlag)
+	if isArray { //array
+		typeName := strings.TrimPrefix(refType, arrayFlag)
+		schema, err := operation.parseObject(typeName, astFile)
+		if err != nil {
+			return nil, err
+		}
+		return &TypeSchema{
+			Name:        refType,
+			Type:        ARRAY,
+			ArraySchema: schema,
+		}, nil
+	}
 	switch {
 	case IsGolangPrimitiveType(refType):
-		typeName := TransToValidSchemeType(refType) //example: int->interger
 		return &TypeSchema{
-			Name: refType,
-			Type: typeName,
+			Name:     refType,
+			Type:     refType,
+			FullName: refType,
 		}, nil
 	case strings.Contains(refType, "{"):
 		return operation.parseCombinedObject(refType, astFile)
@@ -269,14 +284,22 @@ func (operation *Operation) parseCombinedObject(refType string, astFile *ast.Fil
 				if err != nil {
 					return nil, err
 				}
+				key := strings.ToLower(keyVal[0])
 				if isArray {
-					schemaA.Properties[keyVal[0]] = &TypeSchema{
+					arrSchema := &TypeSchema{
+						Name:        key,
 						Type:        ARRAY,
 						ArraySchema: schema,
 					}
+					if old, ok := schemaA.Properties[key]; ok {
+						arrSchema.TagValue = old.TagValue // use old tag, for example Response.data
+					}
+					schemaA.Properties[key] = arrSchema
 				} else {
-					schemaA.Properties[keyVal[0]] = schema //data=xx
-					// props[keyVal[0]] = *schema
+					if old, ok := schemaA.Properties[key]; ok {
+						schema.TagValue = old.TagValue // use old tag, for example Response.data
+					}
+					schemaA.Properties[key] = schema //data=xx
 				}
 			}
 

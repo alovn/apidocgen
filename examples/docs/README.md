@@ -27,3 +27,13 @@
 4. [菜单管理](./apis-menu.md)
 
     - [获取菜单节点](./apis-menu.md#1-获取菜单节点)
+
+5. [测试示例](./apis-demo.md)
+
+    - [struct数组](./apis-demo.md#1-struct数组)
+
+    - [int数组](./apis-demo.md#2-int数组)
+
+    - [int](./apis-demo.md#3-int)
+
+    - [DemoMap](./apis-demo.md#4-DemoMap)

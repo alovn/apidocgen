@@ -31,7 +31,6 @@ const (
 	failureAttr     = "@failure"
 	responseAttr    = "@response"
 	deprecatedAttr  = "@deprecated"
-	tagsAttr        = "@tags"
 	authorAttr      = "@author"
 
 	//doc
@@ -362,19 +361,13 @@ func fullTypeName(pkgName, typeName string) string {
 func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.Field, parentSchema *TypeSchema) (*TypeSchema, error) {
 	if IsGolangPrimitiveType(typeName) {
 		name := field.Names[0].Name
-		isOmitempty, fieldName := getFieldName(name, field, "json")
 		return &TypeSchema{
-			Name:        name,
-			FieldName:   fieldName,
-			Comment:     strings.TrimSuffix(field.Comment.Text(), "\n"),
-			FullName:    name,
-			Type:        typeName,
-			IsOmitempty: isOmitempty,
-			Validate:    getValidateTagValue(field),
-			Tags:        getParameterTags(field),
-			Required:    getRequiredTagValue(field),
-			Parent:      parentSchema,
-			TagValue:    getAllTagValue(field),
+			Name:     name,
+			FullName: name,
+			Type:     typeName,
+			Comment:  strings.TrimSuffix(field.Comment.Text(), "\n"),
+			Parent:   parentSchema,
+			TagValue: getAllTagValue(field),
 		}, nil
 	}
 
@@ -390,11 +383,6 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.
 	if schema.Comment == "" {
 		schema.Comment = strings.TrimSuffix(typeSpecDef.TypeSpec.Comment.Text(), "\n")
 	}
-
-	// if ref && len(schema.Type) > 0 && schema.Type[0] == OBJECT {
-	// 	return parser.getRefTypeSchema(typeSpecDef, schema), nil
-	// }
-
 	return schema, nil
 }
 
@@ -402,17 +390,16 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.
 // given name and package
 func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field, parentSchema *TypeSchema) (*TypeSchema, error) {
 	typeName := typeSpecDef.FullName()
-	refTypeName := TypeDocName(typeName, typeSpecDef.TypeSpec)
 
 	if parentSchema != nil && parentSchema.isInTypeChain(typeSpecDef) {
 		fmt.Printf("Skipping '%s', recursion detected.\n", typeName)
 		return &TypeSchema{
-			Name:      refTypeName,
-			FieldName: refTypeName,
-			FullName:  typeName,
-			Type:      OBJECT,
-			PkgPath:   typeSpecDef.PkgPath,
-			Parent:    parentSchema,
+			Name:     typeName,
+			FullName: typeName,
+			Type:     OBJECT,
+			PkgPath:  typeSpecDef.PkgPath,
+			Parent:   parentSchema,
+			TagValue: getAllTagValue(field),
 		}, nil
 	}
 
@@ -429,30 +416,38 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field
 		}
 		schema.Name = typeSpecDef.Name()
 		schema.FullName = typeSpecDef.FullName()
+		if field != nil {
+			schema.Name = field.Names[0].Name
+			schema.TagValue = getAllTagValue(field)
+		}
 		return schema, err
 	case *ast.Ident:
 		return parser.getTypeSchema(expr.Name, typeSpecDef.File, field, parentSchema)
 	case *ast.MapType:
 		if keyIdent, ok := expr.Key.(*ast.Ident); ok {
 			if IsGolangPrimitiveType(keyIdent.Name) {
-				example := getFieldExample(keyIdent.Name, nil) //map key example
+				example := strings.Trim(getFieldExample(keyIdent.Name, nil), "\"") //map key example
 				if _, ok := expr.Value.(*ast.InterfaceType); ok {
 					return &TypeSchema{Type: OBJECT, Properties: nil}, nil
 				}
-				mapSchama := &TypeSchema{
-					Name:       example,
+
+				mapSchema := &TypeSchema{
 					Type:       OBJECT,
-					FieldName:  example,
-					Parent:     parentSchema,
 					Properties: map[string]*TypeSchema{},
+					Parent:     parentSchema,
 				}
-				schema, err := parser.parseTypeExpr(typeSpecDef.File, field, expr.Value, mapSchama)
+				schema, err := parser.parseTypeExpr(typeSpecDef.File, field, expr.Value, mapSchema)
 				if err != nil {
 					return nil, err
 				}
-				mapSchama.FullName = schema.FullName
-				mapSchama.Properties[strings.Trim(example, "\"")] = schema
-				return mapSchama, nil
+				mapSchema.TagValue = schema.TagValue
+				mapSchema.Name = schema.Name
+				mapSchema.FullName = schema.FullName
+
+				schema.Name = example
+				schema.TagValue = ""
+				mapSchema.Properties[example] = schema
+				return mapSchema, nil
 			}
 		}
 
@@ -474,13 +469,21 @@ func (parser *Parser) parseTypeExpr(file *ast.File, field *ast.Field, typeExpr a
 	// type Foo interface{}
 	case *ast.InterfaceType:
 		return &TypeSchema{
-			Type:   ANY,
-			Parent: parentSchema,
+			Name:     field.Names[0].Name,
+			Type:     ANY,
+			Parent:   parentSchema,
+			TagValue: getAllTagValue(field),
 		}, nil
 
 	// type Foo struct {...}
 	case *ast.StructType:
-		return parser.parseStruct(nil, file, expr.Fields, parentSchema)
+		schema, err := parser.parseStruct(nil, file, expr.Fields, parentSchema)
+		if err != nil {
+			return nil, err
+		}
+		schema.Name = field.Names[0].Name
+		schema.TagValue = getAllTagValue(field)
+		return schema, err
 
 	// type Foo Baz
 	case *ast.Ident:
@@ -501,29 +504,32 @@ func (parser *Parser) parseTypeExpr(file *ast.File, field *ast.Field, typeExpr a
 		if err != nil {
 			return nil, err
 		}
-		return &TypeSchema{Type: "array", ArraySchema: itemSchema, Parent: parentSchema}, nil
+		return &TypeSchema{Type: "array", ArraySchema: itemSchema, Parent: parentSchema, Name: itemSchema.Name, TagValue: itemSchema.TagValue}, nil
 	// type Foo map[string]Bar
 	case *ast.MapType:
 		if keyIdent, ok := expr.Key.(*ast.Ident); ok {
 			if IsGolangPrimitiveType(keyIdent.Name) {
-				example := getFieldExample(keyIdent.Name, nil) //map key example
+				example := strings.Trim(getFieldExample(keyIdent.Name, nil), "\"") //map key example
 				if _, ok := expr.Value.(*ast.InterfaceType); ok {
 					return &TypeSchema{Type: OBJECT, Properties: nil}, nil
 				}
-
-				schema, err := parser.parseTypeExpr(file, field, expr.Value, parentSchema)
+				mapSchema := &TypeSchema{
+					Type:       OBJECT,
+					Properties: map[string]*TypeSchema{},
+					Parent:     parentSchema,
+				}
+				schema, err := parser.parseTypeExpr(file, field, expr.Value, mapSchema)
 				if err != nil {
 					return nil, err
 				}
-				return &TypeSchema{
-					Name:      example,
-					Type:      OBJECT,
-					FieldName: example,
-					FullName:  schema.FullName,
-					Properties: map[string]*TypeSchema{
-						strings.Trim(example, "\""): schema,
-					},
-				}, err
+				mapSchema.TagValue = schema.TagValue
+				mapSchema.Name = schema.Name
+				mapSchema.FullName = schema.FullName
+
+				schema.Name = example
+				schema.TagValue = ""
+				mapSchema.Properties[example] = schema
+				return mapSchema, nil
 			}
 		}
 
@@ -549,17 +555,14 @@ func (parser *Parser) parseStruct(typeSpecDef *TypeSpecDef, file *ast.File, fiel
 		if len(field.Names) != 1 {
 			return nil, errors.New("error len(field.Names) != 1")
 		}
-		name := field.Names[0].Name
+		fmt.Println(field.Names[0].Name)
 		schema, err := parser.parseStructField(file, field, structSchema)
 		if err != nil {
 			return nil, err
 		}
-		schema.Name = name
-		isOmitempty, fieldName := getFieldName(field.Names[0].Name, field, "json")
-		schema.FieldName = fieldName
-		schema.IsOmitempty = isOmitempty
-		schema.TagValue = getAllTagValue(field)
-		structSchema.Properties[schema.FieldName] = schema
+		// schema.Name = field.Names[0].Name
+		// schema.TagValue = getAllTagValue(field)
+		structSchema.Properties[strings.ToLower(schema.Name)] = schema
 	}
 	return structSchema, nil
 }

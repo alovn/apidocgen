@@ -2,7 +2,7 @@
 
 用户资料管理接口
 
-1 [获取用户资料](#1-获取用户资料)
+1. [获取用户资料](#1-获取用户资料)
 
 ## apis
 
@@ -16,8 +16,8 @@ GET /user/profile/get
 
 __Response__:
 
-```json
-// StatusCode: 200 
+```javascript
+//StatusCode: 200 
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
   "data": {  //object(handler.ProfileResponse)
