@@ -14,6 +14,12 @@ func TestOperation_ParseMatchResponseComment(t *testing.T) {
 	}{
 		{
 			name:        "match response",
+			commentLine: `200 Response`,
+			wantLen:     4,
+			matches:     []string{"200", `Response`, ""},
+		},
+		{
+			name:        "match response",
 			commentLine: `200 common.Response`,
 			wantLen:     4,
 			matches:     []string{"200", `common.Response`, ""},

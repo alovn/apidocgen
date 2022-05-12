@@ -3,9 +3,10 @@
 其它一些示例演示
 
 1. [struct数组](#1-struct数组)
-2. [int数组](#2-int数组)
-3. [int](#3-int)
-4. [DemoMap](#4-DemoMap)
+2. [struct嵌套](#2-struct嵌套)
+3. [int数组](#3-int数组)
+4. [int](#4-int)
+5. [DemoMap](#5-DemoMap)
 
 ## apis
 
@@ -22,6 +23,9 @@ __Response__:
 [  //array[handler.DemoData]
   {  //object(handler.DemoData)
     "count": 123,  //int
+    "DemoObject": {  //object(handler.DemoObject)
+      "name": "abc"  //string
+    },
     "description": "abc",  //string
     "float_array": [  //array[float64]
       1.23
@@ -33,12 +37,6 @@ __Response__:
     "map": {  //object(Map)
       "abc": 123  //int
     },
-    "object_1": {  //object(handler.DemoObject)
-      "name": "abc"  //string
-    },
-    "object_2": {  //object(handler.DemoObject)
-      "name": "abc"  //string
-    },
     "title": "abc"  //string, 标题
   }
 ]
@@ -46,7 +44,25 @@ __Response__:
 
 ---
 
-### 2. int数组
+### 2. struct嵌套
+
+```text
+GET /user/demo/struct_nested
+```
+
+__Response__:
+
+```javascript
+//StatusCode: 200 nested struct
+{  //object(handler.Struct1)
+  "Name": "abc",  //string
+  "Name2": "abc"  //string
+}
+```
+
+---
+
+### 3. int数组
 
 ```text
 GET /user/demo/int_array
@@ -63,7 +79,7 @@ __Response__:
 
 ---
 
-### 3. int
+### 4. int
 
 ```text
 GET /user/demo/int
@@ -79,7 +95,7 @@ __Response__:
 
 ---
 
-### 4. DemoMap
+### 5. DemoMap
 
 ```text
 GET /user/demo/map
@@ -92,6 +108,9 @@ __Response__:
 {  //object(handler.DemoData)
   "abc": {  //object(handler.DemoData)
     "count": 123,  //int
+    "DemoObject": {  //object(handler.DemoObject)
+      "name": "abc"  //string
+    },
     "description": "abc",  //string
     "float_array": [  //array[float64]
       1.23
@@ -102,12 +121,6 @@ __Response__:
     "int_pointer": 123,  //int
     "map": {  //object(Map)
       "abc": 123  //int
-    },
-    "object_1": {  //object(handler.DemoObject)
-      "name": "abc"  //string
-    },
-    "object_2": {  //object(handler.DemoObject)
-      "name": "abc"  //string
     },
     "title": "abc"  //string, 标题
   }

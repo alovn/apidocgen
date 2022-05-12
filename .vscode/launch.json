@@ -12,7 +12,7 @@
             "program": "${workspaceFolder}/cmd/apidoc/main.go",
             "args": [
                 "--dir", "../../examples/svc-user/",
-                "--output", "../../examples/docs"
+                "--output", "../../examples/docs",
             ]
         }
     ]

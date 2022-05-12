@@ -58,6 +58,7 @@ func main() {
 		mux.HandleFunc("/user/demo/int_array", demo.IntArray)
 		mux.HandleFunc("/user/demo/map", demo.Map)
 		mux.HandleFunc("/user/demo/int", demo.Int)
+		mux.HandleFunc("/user/demo/struct_nested", demo.StructNested)
 	}
 
 	_ = http.ListenAndServe(":8000", mux)

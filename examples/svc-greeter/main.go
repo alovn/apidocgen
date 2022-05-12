@@ -64,12 +64,21 @@ type Request struct {
 	Token string `header:"token"`
 } //请求对象
 
+type Struct1 struct {
+	Name string
+	Struct2
+}
+type Struct2 struct {
+	Name2 string
+}
+
 //@title 测试greeter
 //@api GET /greeter
 //@group greeter
 //@accept json
 //@request1 Request
-//@response 200 Response{data=TestData} "输出对象 dd"
+//@response 200 Struct1 "struct1"
+//@response1 200 Response{data=TestData} "输出对象 dd"
 //@response1 200 common.Response{data=TestData} "输出对象 dd"
 //@response1 500 Response{code=10010,msg="异常"} "出错了"
 //@response1 500 int 错误

@@ -380,9 +380,6 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, field *ast.
 	if err != nil {
 		return nil, err
 	}
-	if schema.Comment == "" {
-		schema.Comment = strings.TrimSuffix(typeSpecDef.TypeSpec.Comment.Text(), "\n")
-	}
 	return schema, nil
 }
 
@@ -414,12 +411,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field
 		if err != nil {
 			return nil, err
 		}
-		schema.Name = typeSpecDef.Name()
-		schema.FullName = typeSpecDef.FullName()
-		if field != nil {
-			schema.Name = field.Names[0].Name
-			schema.TagValue = getAllTagValue(field)
-		}
+
 		return schema, err
 	case *ast.Ident:
 		return parser.getTypeSchema(expr.Name, typeSpecDef.File, field, parentSchema)
@@ -545,32 +537,41 @@ func (parser *Parser) parseTypeExpr(file *ast.File, field *ast.Field, typeExpr a
 
 func (parser *Parser) parseStruct(typeSpecDef *TypeSpecDef, file *ast.File, fields *ast.FieldList, parentSchama *TypeSchema) (*TypeSchema, error) {
 	structSchema := &TypeSchema{
-		Name:        file.Name.Name,
+		Name:        typeSpecDef.Name(),
+		FullName:    typeSpecDef.FullName(),
+		PkgPath:     typeSpecDef.PkgPath,
+		FullPath:    typeSpecDef.FullPath(),
 		Type:        OBJECT,
+		Comment:     strings.TrimSuffix(typeSpecDef.TypeSpec.Comment.Text(), "\n"),
 		typeSpecDef: typeSpecDef,
 		Parent:      parentSchama,
 		Properties:  map[string]*TypeSchema{},
 	}
+
 	for _, field := range fields.List {
-		if len(field.Names) != 1 {
-			return nil, errors.New("error len(field.Names) != 1")
-		}
-		fmt.Println(field.Names[0].Name)
 		schema, err := parser.parseStructField(file, field, structSchema)
 		if err != nil {
 			return nil, err
 		}
-		// schema.Name = field.Names[0].Name
-		// schema.TagValue = getAllTagValue(field)
-		structSchema.Properties[strings.ToLower(schema.Name)] = schema
+		if field.Names == nil { //nested struct, replace with child properties
+			for _, p := range schema.Properties {
+				if _, ok := structSchema.Properties[strings.ToLower(p.Name)]; !ok { //if not exists key
+					structSchema.Properties[strings.ToLower(p.Name)] = p
+				}
+			}
+		} else {
+			structSchema.Properties[strings.ToLower(schema.Name)] = schema
+		}
 	}
 	return structSchema, nil
 }
 
 func (parser *Parser) parseStructField(file *ast.File, field *ast.Field, parentSchama *TypeSchema) (*TypeSchema, error) {
-	name := field.Names[0].Name
-	if !ast.IsExported(name) {
-		return nil, nil
+	if field.Names != nil {
+		name := field.Names[0].Name
+		if !ast.IsExported(name) {
+			return nil, nil
+		}
 	}
 	return parser.parseTypeExpr(file, field, field.Type, parentSchama)
 }

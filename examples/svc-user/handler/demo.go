@@ -34,6 +34,22 @@ func (h *DemoHandler) StructArray(w http.ResponseWriter, r *http.Request) {
 
 }
 
+type Struct1 struct {
+	Name string
+	Struct2
+}
+type Struct2 struct {
+	Name2 string
+}
+
+//@api GET /demo/struct_nested
+//@title struct嵌套
+//@group demo
+//@response 200 Struct1 "nested struct"
+func (h *DemoHandler) StructNested(w http.ResponseWriter, r *http.Request) {
+
+}
+
 //@api GET /demo/int_array
 //@title int数组
 //@group demo

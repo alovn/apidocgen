@@ -79,10 +79,11 @@ type ApiResponseSpec struct {
 }
 
 type TypeSchema struct {
-	Name          string //xxRequest, xxResponse
+	Name          string //xxRequest, xxResponse, for example: RegisterRequest
 	Type          string //int, string, bool, object, array, any
 	FullName      string
-	PkgPath       string
+	PkgPath       string //for example: github.com/alovn/apidoc/examples/svc-user/handler
+	FullPath      string //for example: github.com/alovn/apidoc/examples/svc-user/handler.RegisterRequest
 	Comment       string
 	ArraySchema   *TypeSchema
 	Properties    map[string]*TypeSchema //object
@@ -185,7 +186,7 @@ func (v *TypeSchema) buildComment() string {
 		}
 		s += fmt.Sprintf("%s[%s]", ARRAY, arrayName)
 	} else if len(v.Properties) > 0 { //object
-		s += fmt.Sprintf("%s(%s)", v.Type, v.PkgPath+v.FullName)
+		s += fmt.Sprintf("%s(%s)", v.Type, v.FullName)
 	} else {
 		s += v.Type
 	}
