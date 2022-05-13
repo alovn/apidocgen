@@ -1,6 +1,12 @@
 package handler
 
-import "net/http"
+import (
+	"encoding/json"
+	"encoding/xml"
+	"net/http"
+
+	"github.com/alovn/apidoc/examples/common"
+)
 
 type DemoHandler struct{}
 
@@ -72,4 +78,31 @@ func (h *DemoHandler) Int(w http.ResponseWriter, r *http.Request) {
 //@response 200 DemoMap "demo map"
 func (h *DemoHandler) Map(w http.ResponseWriter, r *http.Request) {
 
+}
+
+type DemoXMLRequest struct {
+	XMLName xml.Name `xml:"request"`
+	ID      int64    `param:"id" xml:"id"` //DemoID
+} //XML测试请求对象
+
+type DemoXMLResponse struct {
+	XMLName xml.Name `xml:"demo"`
+	ID      int64    `xml:"id"`      //地址ID
+	CityID  int64    `xml:"city_id"` //城市ID
+	Address string   `xml:"address"` //地址信息
+} //XML测试返回对象
+
+//@api GET /demo/xml
+//@title XML测试
+//@group demo
+//@accept xml
+//@request DemoXMLRequest
+//@format xml
+//@response 200 common.Response{code=0,msg="success",data=DemoXMLResponse}
+//@author alovn
+func (h *AddressHandler) XML(w http.ResponseWriter, r *http.Request) {
+	address := DemoXMLRequest{}
+	res := common.NewResponse(200, "获取成功", address)
+	b, _ := json.Marshal(res)
+	_, _ = w.Write(b)
 }

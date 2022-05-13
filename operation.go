@@ -60,6 +60,8 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		operation.Group = lineRemainder
 	case acceptAttr:
 		operation.Accept = lineRemainder
+	case formatAttr:
+		operation.Format = lineRemainder
 	case descriptionAttr:
 		operation.ParseDescriptionComment(lineRemainder)
 	case apiAttr:
@@ -73,7 +75,6 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	case deprecatedAttr, "deprecated:":
 		operation.Deprecated = true
 	}
-
 	return nil
 }
 
@@ -153,7 +154,8 @@ func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast
 			}
 		}
 		if parameterCount < len(schema.Properties) {
-			operation.Requests.Body = schema.JSON()
+			operation.Requests.Accept = operation.Accept
+			operation.Requests.Schema = schema
 		}
 		return nil
 	}
@@ -202,14 +204,12 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	if err != nil {
 		return err
 	}
-	j := schema.JSON()
 	// fmt.Printf("schema:%+v\n", schema)
 	// fmt.Println("json:")
 	// fmt.Println(j)
 	operation.Responses = append(operation.Responses, &ApiResponseSpec{
 		StatusCode:  code,
-		Format:      "json",
-		Examples:    j,
+		Format:      operation.Format,
 		Schema:      schema,
 		Description: description,
 	})

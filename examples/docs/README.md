@@ -39,3 +39,5 @@
     5.4. [int](./apis-demo.md#4-int)
 
     5.5. [DemoMap](./apis-demo.md#5-DemoMap)
+
+    5.6. [XML测试](./apis-demo.md#6-XML测试)

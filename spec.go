@@ -45,7 +45,9 @@ type ApiSpec struct {
 
 type ApiRequestSpec struct {
 	Parameters map[string]*ApiParameterSpec
-	Body       string
+	Accept     string //accept format
+	Schema     *TypeSchema
+	body       string //cache
 }
 
 type ApiParameterSpec struct {
@@ -73,7 +75,6 @@ func (p ApiParameterSpec) ParameterTypes() string {
 type ApiResponseSpec struct {
 	StatusCode  int
 	Format      string //json xml
-	Examples    string
 	Schema      *TypeSchema
 	Description string
 }
@@ -94,12 +95,58 @@ type TypeSchema struct {
 	parameterTags map[string]string
 }
 
+func (s *ApiRequestSpec) Body() string {
+	if s.Schema == nil {
+		return ""
+	}
+	if s.body != "" {
+		return s.body
+	}
+	s.body = s.Schema.Write(s.Accept)
+	return s.body
+}
+
+func (s *ApiResponseSpec) Body() string {
+	if s.Schema == nil {
+		return ""
+	}
+	return s.Schema.Write(s.Format)
+}
+
+func (s *TypeSchema) Write(format string) string {
+	switch format {
+	case "json":
+		return s.JSON()
+	case "xml":
+		return s.XML()
+	default:
+		return s.JSON()
+	}
+}
+
 func (s *TypeSchema) JSON() string {
 	depth := 0
 	var sb strings.Builder
 	// sb.WriteString(fmt.Sprintf("// %s %s %s\n", s.Type, s.Name, s.Comment))
 	s.parseJSON(depth, &sb, true)
 	return sb.String()
+}
+
+func (s *TypeSchema) isIgnoreJsonKey() (isIgnore bool) {
+	if s.Name == "XMLName" && s.FullName == "xml.Name" { //ignore xml
+		isIgnore = true
+		return
+	}
+	key, isOmitempty := s.JSONKey()
+	if key == "-" || (isOmitempty && s.ExampleValue() == NULL) { //omitempty
+		isIgnore = true
+		return
+	}
+	if s.parameterTags != nil && !s.HasJSONTag() { //request parameter ignore
+		isIgnore = true
+		return
+	}
+	return false
 }
 
 func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
@@ -110,33 +157,27 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 
 	if s.Type == OBJECT && s.Properties != nil && len(s.Properties) > 0 {
 		if isNewLine {
-			sb.WriteString(prefix + "{")
-		} else {
-			sb.WriteString("{")
+			sb.WriteString(prefix)
 		}
-		sb.WriteString("  //" + s.buildComment())
-		sb.WriteString("\n")
-		var i int = 0
+		sb.WriteString("{  //" + s.buildComment() + "\n")
 		prefix2 := prefix + "  "
 		//sort keys
 		var keys []string
-		for k := range s.Properties {
+		for k, v := range s.Properties {
+			if v.isIgnoreJsonKey() {
+				continue
+			}
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
-		//build json
+		var i int = 0
+		// build json
 		for _, k := range keys {
 			v := s.Properties[k]
-			key, isOmitempty := v.JSONKey()
-			if isOmitempty && v.ExampleValue() == NULL { //omitempty
-				continue
-			}
-			if v.parameterTags != nil && !v.HasJSONTag() {
-				continue
-			}
+			key, _ := v.JSONKey()
 			sb.WriteString(fmt.Sprintf(prefix2+"\"%s\": ", key)) //write key
 			v.parseJSON(depth+1, sb, false)
-			haxNext := i < len(s.Properties)-1
+			haxNext := i < len(keys)-1
 			if haxNext {
 				sb.WriteString(",")
 			}
@@ -151,12 +192,9 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 
 	} else if s.Type == ARRAY && s.ArraySchema != nil {
 		if isNewLine {
-			sb.WriteString(prefix + "[")
-		} else {
-			sb.WriteString("[")
+			sb.WriteString(prefix)
 		}
-		sb.WriteString(fmt.Sprintf("  //%s", s.buildComment()))
-		sb.WriteString("\n")
+		sb.WriteString(fmt.Sprintf("[  //%s\n", s.buildComment()))
 		if s.ArraySchema.ExampleValue() != NULL {
 			s.ArraySchema.parseJSON(depth+1, sb, true)
 		}
@@ -167,9 +205,91 @@ func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
 			sb.WriteString(fmt.Sprintf("//%s\n", s.buildComment()))
 		}
 		if isNewLine {
-			sb.WriteString(prefix + s.ExampleValue())
+			sb.WriteString(prefix)
+		}
+		sb.WriteString(s.ExampleValue())
+	}
+}
+
+func (s *TypeSchema) XML() string {
+	depth := 0
+	var sb strings.Builder
+	// sb.WriteString(fmt.Sprintf("// %s %s %s\n", s.Type, s.Name, s.Comment))
+	s.parseXML(depth, &sb, false)
+	return sb.String()
+}
+
+func (s *TypeSchema) parseXML(depth int, sb *strings.Builder, isNewLine bool) {
+	prefix := ""
+	for i := depth; i > 0; i-- {
+		prefix += "  "
+	}
+	if s.Type == OBJECT && s.Properties != nil && len(s.Properties) > 0 {
+		if isNewLine {
+			sb.WriteString("\n")
+		}
+		xmlName := s.XMLName()
+		attrs := s.XMLAttrs()
+		sb.WriteString(prefix + "<")
+		sb.WriteString(xmlName)
+		for k, v := range attrs { //write attrs
+			sb.WriteString(fmt.Sprintf(" %s=\"%s\"", k, v))
+		}
+		sb.WriteString("> //" + s.buildComment())
+		prefix2 := prefix + "  "
+		//sort keys
+		var keys []string
+		for k := range s.Properties {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		//build xml
+		for _, k := range keys {
+			v := s.Properties[k]
+			if v.Name == "XMLName" && v.FullName == "xml.Name" { //ignore xmlname
+				continue
+			}
+			key, isAttr, isOmitempty, isInner := v.XMLTag()
+			if isAttr { //ignore attr
+				continue
+			}
+			if key == "-" || (isOmitempty && v.ExampleValue() == NULL) { //ignore "-", omitempty
+				continue
+			}
+			if isInner { //innerxml
+				sb.WriteString(prefix2 + strings.Trim(v.ExampleValue(), "\""))
+				sb.WriteString("//innerxml " + v.buildComment() + "\n")
+				continue
+			}
+			if len(v.Properties) == 0 && v.Type != ARRAY {
+				example := v.ExampleValue()
+				if example != NULL {
+					//write xml node one line
+					sb.WriteString(fmt.Sprintf("\n"+prefix2+"<%s>", key)) //write key
+					sb.WriteString(strings.Trim(example, "\""))
+					sb.WriteString(fmt.Sprintf("</%s> //%s", key, v.buildComment())) //write key
+				}
+			} else {
+				v.parseXML(depth+1, sb, true)
+			}
+		}
+		sb.WriteString("\n" + prefix + fmt.Sprintf("</%s>", xmlName))
+
+	} else if s.Type == ARRAY && s.ArraySchema != nil {
+		if s.ArraySchema.Type == OBJECT {
+			s.ArraySchema.parseXML(depth, sb, true)
 		} else {
-			sb.WriteString(s.ExampleValue())
+			sb.WriteString(fmt.Sprintf("\n%s<%s> //%s\n", prefix, s.Name, s.buildComment())) //write key
+			s.ArraySchema.parseXML(depth+1, sb, false)
+			sb.WriteString(fmt.Sprintf("\n%s</%s>", prefix, s.Name)) //write key
+		}
+	} else { // write example value
+		if isNewLine {
+			sb.WriteString("\n")
+		}
+		example := s.ExampleValue()
+		if example != NULL {
+			sb.WriteString(prefix + "  " + strings.Trim(example, "\""))
 		}
 	}
 }
@@ -287,6 +407,62 @@ func (v *TypeSchema) ValidateTag() (validate string) {
 	return
 }
 
+func (v *TypeSchema) XMLName() string {
+	if v.Properties != nil {
+		if x, ok := v.Properties["xmlname"]; ok {
+			if x.Name == "XMLName" && x.FullName == "xml.Name" {
+				val, has := x.GetTag("xml")
+				if has {
+					return strings.Split(val, ",")[0]
+				}
+			}
+		}
+	}
+	return v.Name
+}
+
+func (v *TypeSchema) XMLAttrs() map[string]string {
+	if v.Properties != nil {
+		m := make(map[string]string)
+		for _, schema := range v.Properties {
+			if schema.Name == "XMLName" && schema.FullName == "xml.Name" {
+				continue
+			}
+			xmlTag, isAttr, _, _ := schema.XMLTag()
+			if isAttr {
+				m[xmlTag] = schema.ExampleValue()
+			}
+		}
+		return m
+	}
+	return nil
+}
+
+func (v *TypeSchema) XMLTag() (xmlTag string, isAttr, isOmitempty, isInner bool) {
+	val, has := v.GetTag("xml")
+	if has {
+		arr := strings.Split(val, ",")
+		if len(arr) > 0 {
+			xmlTag = arr[0]
+			for i, a := range arr {
+				if i == 0 {
+					continue
+				}
+				switch a {
+				case "attr":
+					isAttr = true
+				case "omitempty":
+					isOmitempty = true
+				case "innerxml":
+					isInner = true
+				}
+			}
+			return
+		}
+	}
+	return v.Name, false, false, false
+}
+
 func getFieldExample(typeName string, field *ast.Field) string {
 	example := ""
 	if field != nil {
@@ -319,7 +495,6 @@ func getTypeExample(typeName, example string) string {
 	case "any":
 		return "null"
 	}
-
 	return example
 }
 

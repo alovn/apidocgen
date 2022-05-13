@@ -30,6 +30,7 @@ const (
 	successAttr     = "@success"
 	failureAttr     = "@failure"
 	responseAttr    = "@response"
+	formatAttr      = "@format"
 	deprecatedAttr  = "@deprecated"
 	authorAttr      = "@author"
 
@@ -411,7 +412,10 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field
 		if err != nil {
 			return nil, err
 		}
-
+		if field != nil && field.Names != nil {
+			schema.Name = field.Names[0].Name
+			schema.TagValue = getAllTagValue(field)
+		}
 		return schema, err
 	case *ast.Ident:
 		return parser.getTypeSchema(expr.Name, typeSpecDef.File, field, parentSchema)
@@ -479,8 +483,15 @@ func (parser *Parser) parseTypeExpr(file *ast.File, field *ast.Field, typeExpr a
 
 	// type Foo Baz
 	case *ast.Ident:
-		return parser.getTypeSchema(expr.Name, file, field, parentSchema)
-
+		schema, err := parser.getTypeSchema(expr.Name, file, field, parentSchema)
+		if err != nil {
+			return nil, err
+		}
+		if field != nil && field.Names != nil {
+			schema.Name = field.Names[0].Name
+			schema.TagValue = getAllTagValue(field)
+		}
+		return schema, err
 	// type Foo *Baz
 	case *ast.StarExpr:
 		return parser.parseTypeExpr(file, field, expr.X, parentSchema)

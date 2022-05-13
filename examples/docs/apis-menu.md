@@ -24,11 +24,11 @@ __Response__:
   "code": 0,  //int, 返回状态码
   "data": [  //array[handler.Node]
     {  //object(handler.Node)
+      "id": 123,  //int64
+      "name": "abc",  //string
       "nodes": [  //array[handler.Node]
 
-      ],
-      "id": 123,  //int64
-      "name": "abc"  //string
+      ]
     }
   ],
   "msg": "success"  //string, 返回消息

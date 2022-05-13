@@ -55,7 +55,7 @@ __Response__:
 
 ```javascript
 //StatusCode: {{$res.StatusCode}} {{$res.Description}}
-{{$res.Examples}}
+{{$res.Body}}
 ```
 {{- end}}
 

@@ -54,7 +54,7 @@ __Response__:
 //StatusCode: 200 密码格式错误
 {  //object(common.Response), 通用返回结果
   "code": 10011,  //int, 返回状态码
-  "msg": "password format error",  //string, 返回消息
+  "msg": "password format error"  //string, 返回消息
 }
 ```
 
@@ -93,7 +93,7 @@ __Response__:
 //StatusCode: 200 密码错误
 {  //object(common.Response), 通用返回结果
   "code": 10020,  //int, 返回状态码
-  "msg": "password_error",  //string, 返回消息
+  "msg": "password_error"  //string, 返回消息
 }
 ```
 

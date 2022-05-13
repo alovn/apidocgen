@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/xml"
 	"fmt"
 
 	"github.com/alovn/apidoc/examples/common"
@@ -24,9 +25,9 @@ func group(f func()) {
 type MyInt int
 
 type Response struct {
-	Code int         `json:"code" example:"0"`             //返回状态码
-	Msg  string      `json:"msg,omitempty" example:"返回消息"` //返回文本消息
-	Data interface{} `json:"data,omitempty"`               //返回的具体数据
+	Code int         `json:"code"`           //返回状态码
+	Msg  string      `json:"msg"`            //返回消息
+	Data interface{} `json:"data,omitempty"` //返回具体数据
 } //通用返回结果
 
 type TestData2 struct {
@@ -40,21 +41,21 @@ type Node struct {
 	Nodes map[string]Node
 }
 type TestData struct {
-	MyTitle          string     `json:"my_title,omitempty"` //标题
-	Data2            *TestData2 `json:"data2,omitempty"`
-	MyIntData        int
-	MyFloat64        float64
-	MyFloat32        float32
-	MyIntArray       []int
+	MyTitle string `json:"my_title,omitempty"` //标题
+	// Data2            *TestData2 `json:"data2,omitempty"`
+	// MyIntData int
+	// MyFloat64        float64
+	// MyFloat32        float32
+	// MyIntArray []int
 	MyTestData2Array []TestData2
-	Int              *int
-	MyInt            MyInt
-	MyInts           []MyInt
-	Map              Map `json:"amap"`
-	Map2             Map2
-	Map3             map[string]TestData2
-	Nodes            map[string]Node
-	Map4             map[int]Node
+	// Int              *int
+	// MyInt            MyInt
+	MyInts []MyInt
+	// Map              Map `json:"amap"`
+	// Map2             Map2
+	// Map3             map[string]TestData2
+	Nodes map[string]Node
+	// Map4             map[int]Node
 }
 
 type Request struct {
@@ -72,13 +73,25 @@ type Struct2 struct {
 	Name2 string
 }
 
+type XMLResponse struct {
+	XMLName xml.Name    `xml:"response"`
+	Attr    int         `json:"attr" xml:"attr,attr"`                //返回状态码
+	Code    int         `json:"code" xml:"code"`                     //返回状态码
+	Msg     string      `json:"msg" xml:"msg"`                       //返回消息
+	Data    interface{} `json:"data,omitempty" xml:"data,omitempty"` //返回具体数据
+	// InnerText string      `xml:",innerxml"`
+	// Arr       []string    `xml:"arr"`
+} //通用返回结果
+
 //@title 测试greeter
 //@api GET /greeter
 //@group greeter
-//@accept json
-//@request1 Request
-//@response 200 Struct1 "struct1"
-//@response1 200 Response{data=TestData} "输出对象 dd"
+//@accept xml
+//@format xml
+//@request Request
+//@response1 200 TestData "输出对象"
+//@response1 200 Struct1 "struct1"
+//@response 200 Response{data=TestData} "输出对象 dd"
 //@response1 200 common.Response{data=TestData} "输出对象 dd"
 //@response1 500 Response{code=10010,msg="异常"} "出错了"
 //@response1 500 int 错误
@@ -86,36 +99,4 @@ func greet() {
 	var msg = "Hello World!"
 	fmt.Println(msg)
 	fmt.Println(&common.Response{})
-}
-
-//@title 测试greeter2
-//@api GET /greeter2
-//@group greeter
-//@response1 200 TestData "输出对象 dd"
-func greet2() {
-	var msg = "Hello World!"
-	fmt.Println(msg)
-}
-
-//@title 测试hello
-//@api GET /hello
-//@group hello
-func hello() {
-	var msg = "Hello World!"
-	fmt.Println(msg)
-}
-
-//@title 测试hello2
-//@api GET /hello2
-//@group hello
-func hello2() {
-	var msg = "Hello World!"
-	fmt.Println(msg)
-}
-
-//@title 测试other
-//@api GET /other
-func other() {
-	var msg = "Hello World!"
-	fmt.Println(msg)
 }

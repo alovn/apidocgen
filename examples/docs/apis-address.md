@@ -40,7 +40,7 @@ __Response__:
 //StatusCode: 200 
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
-  "msg": "success",  //string, 返回消息
+  "msg": "success"  //string, 返回消息
 }
 ```
 
@@ -67,7 +67,7 @@ __Response__:
 //StatusCode: 200 
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
-  "msg": "success",  //string, 返回消息
+  "msg": "success"  //string, 返回消息
 }
 ```
 
@@ -93,7 +93,7 @@ __Response__:
 //StatusCode: 200 
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
-  "msg": "success",  //string, 返回消息
+  "msg": "success"  //string, 返回消息
 }
 ```
 
