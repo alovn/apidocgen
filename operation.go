@@ -285,6 +285,16 @@ func (operation *Operation) parseCombinedObject(refType string, astFile *ast.Fil
 					return nil, err
 				}
 				key := strings.ToLower(keyVal[0])
+				if old, ok := schemaA.Properties[key]; ok { //xml tag replace
+					xmlTag, hasTag, isAttr, _, isInner := old.XMLTag()
+					if _, has2 := schema.hasXMLName(); !has2 {
+						if hasTag && !isAttr && !isInner {
+							schema.xmlName = xmlTag
+						} else {
+							schema.xmlName = old.Name
+						}
+					}
+				}
 				if isArray {
 					arrSchema := &TypeSchema{
 						Name:        key,

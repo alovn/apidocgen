@@ -75,13 +75,23 @@ type Struct2 struct {
 
 type XMLResponse struct {
 	XMLName xml.Name    `xml:"response"`
-	Attr    int         `json:"attr" xml:"attr,attr"`                //返回状态码
-	Code    int         `json:"code" xml:"code"`                     //返回状态码
-	Msg     string      `json:"msg" xml:"msg"`                       //返回消息
-	Data    interface{} `json:"data,omitempty" xml:"data,omitempty"` //返回具体数据
+	Attr    int         `json:"attr" xml:"attr,attr"` //返回状态码
+	Code    int         `json:"code" xml:"code"`      //返回状态码
+	Msg     string      `json:"msg" xml:"msg"`        //返回消息
+	Data    interface{} //`json:"data,omitempty" xml:"data,omitempty"` //返回具体数据
 	// InnerText string      `xml:",innerxml"`
 	// Arr       []string    `xml:"arr"`
 } //通用返回结果
+
+type XMLData struct {
+	XMLName xml.Name `xml:"mydata"`
+	Title   string
+	Desc    string
+}
+type XMLData2 struct {
+	Title string
+	Desc  string
+}
 
 //@title 测试greeter
 //@api GET /greeter
@@ -91,7 +101,8 @@ type XMLResponse struct {
 //@request Request
 //@response1 200 TestData "输出对象"
 //@response1 200 Struct1 "struct1"
-//@response 200 Response{data=TestData} "输出对象 dd"
+//@response 200 XMLResponse{data=[]XMLData} "输出xml"
+//@response 200 XMLResponse{data=[]XMLData2} "输出xml2"
 //@response1 200 common.Response{data=TestData} "输出对象 dd"
 //@response1 500 Response{code=10010,msg="异常"} "出错了"
 //@response1 500 int 错误

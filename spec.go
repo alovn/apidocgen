@@ -77,6 +77,7 @@ type ApiResponseSpec struct {
 	Format      string //json xml
 	Schema      *TypeSchema
 	Description string
+	body        string //cache
 }
 
 type TypeSchema struct {
@@ -93,6 +94,7 @@ type TypeSchema struct {
 	typeSpecDef   *TypeSpecDef
 	example       string //example value
 	parameterTags map[string]string
+	xmlName       string
 }
 
 func (s *ApiRequestSpec) Body() string {
@@ -110,7 +112,11 @@ func (s *ApiResponseSpec) Body() string {
 	if s.Schema == nil {
 		return ""
 	}
-	return s.Schema.Write(s.Format)
+	if s.body != "" {
+		return s.body
+	}
+	s.body = s.Schema.Write(s.Format)
+	return s.body
 }
 
 func (s *TypeSchema) Write(format string) string {
@@ -249,7 +255,7 @@ func (s *TypeSchema) parseXML(depth int, sb *strings.Builder, isNewLine bool) {
 			if v.Name == "XMLName" && v.FullName == "xml.Name" { //ignore xmlname
 				continue
 			}
-			key, isAttr, isOmitempty, isInner := v.XMLTag()
+			key, _, isAttr, isOmitempty, isInner := v.XMLTag()
 			if isAttr { //ignore attr
 				continue
 			}
@@ -407,7 +413,29 @@ func (v *TypeSchema) ValidateTag() (validate string) {
 	return
 }
 
+func (v *TypeSchema) hasXMLName() (xmlName string, has bool) {
+	if v.xmlName != "" {
+		return v.xmlName, true
+	}
+	if v.Properties != nil {
+		if x, ok := v.Properties["xmlname"]; ok {
+			if x.Name == "XMLName" && x.FullName == "xml.Name" {
+				val, has2 := x.GetTag("xml")
+				if has2 {
+					xmlName = strings.Split(val, ",")[0]
+					has = true
+					return
+				}
+			}
+		}
+	}
+	return "", false
+}
+
 func (v *TypeSchema) XMLName() string {
+	if v.xmlName != "" {
+		return v.xmlName
+	}
 	if v.Properties != nil {
 		if x, ok := v.Properties["xmlname"]; ok {
 			if x.Name == "XMLName" && x.FullName == "xml.Name" {
@@ -428,7 +456,7 @@ func (v *TypeSchema) XMLAttrs() map[string]string {
 			if schema.Name == "XMLName" && schema.FullName == "xml.Name" {
 				continue
 			}
-			xmlTag, isAttr, _, _ := schema.XMLTag()
+			xmlTag, _, isAttr, _, _ := schema.XMLTag()
 			if isAttr {
 				m[xmlTag] = schema.ExampleValue()
 			}
@@ -438,12 +466,13 @@ func (v *TypeSchema) XMLAttrs() map[string]string {
 	return nil
 }
 
-func (v *TypeSchema) XMLTag() (xmlTag string, isAttr, isOmitempty, isInner bool) {
+func (v *TypeSchema) XMLTag() (xmlTag string, hasTag, isAttr, isOmitempty, isInner bool) {
 	val, has := v.GetTag("xml")
 	if has {
 		arr := strings.Split(val, ",")
 		if len(arr) > 0 {
 			xmlTag = arr[0]
+			hasTag = xmlTag != "" && xmlTag != "-"
 			for i, a := range arr {
 				if i == 0 {
 					continue
@@ -460,7 +489,7 @@ func (v *TypeSchema) XMLTag() (xmlTag string, isAttr, isOmitempty, isInner bool)
 			return
 		}
 	}
-	return v.Name, false, false, false
+	return v.Name, false, false, false, false
 }
 
 func getFieldExample(typeName string, field *ast.Field) string {

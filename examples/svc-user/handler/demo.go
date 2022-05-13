@@ -91,6 +91,11 @@ type DemoXMLResponse struct {
 	CityID  int64    `xml:"city_id"` //城市ID
 	Address string   `xml:"address"` //地址信息
 } //XML测试返回对象
+type DemoXMLResponse2 struct {
+	ID      int64  `xml:"id"`      //地址ID
+	CityID  int64  `xml:"city_id"` //城市ID
+	Address string `xml:"address"` //地址信息
+} //XML测试返回对象2
 
 //@api GET /demo/xml
 //@title XML测试
@@ -99,6 +104,8 @@ type DemoXMLResponse struct {
 //@request DemoXMLRequest
 //@format xml
 //@response 200 common.Response{code=0,msg="success",data=DemoXMLResponse}
+//@response 200 common.Response{code=0,msg="success",data=DemoXMLResponse2}
+//@response 200 common.Response{code=10010,msg="sme error"}
 //@author alovn
 func (h *AddressHandler) XML(w http.ResponseWriter, r *http.Request) {
 	address := DemoXMLRequest{}

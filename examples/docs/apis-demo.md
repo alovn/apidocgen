@@ -173,4 +173,25 @@ __Response__:
 </response>
 ```
 
+```javascript
+//StatusCode: 200 
+<response> //object(common.Response), 通用返回结果
+  <code>0</code> //int, 返回状态码
+  <data> //object(handler.DemoXMLResponse2), XML测试返回对象2
+    <address>abc</address> //string, 地址信息
+    <city_id>123</city_id> //int64, 城市ID
+    <id>123</id> //int64, 地址ID
+  </data>
+  <msg>success</msg> //string, 返回消息
+</response>
+```
+
+```javascript
+//StatusCode: 200 
+<response> //object(common.Response), 通用返回结果
+  <code>10010</code> //int, 返回状态码
+  <msg>sme error</msg> //string, 返回消息
+</response>
+```
+
 ---
