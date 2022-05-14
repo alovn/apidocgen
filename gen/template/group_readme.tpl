@@ -1,5 +1,10 @@
 # {{.Title}} {{if .Service}} ({{.Service}}){{end}}
 
+{{- if .Version}}
+
+version: _@{{.Version}}_
+{{- end}}
+
 {{- if .Description}}
 
 {{.Description}}

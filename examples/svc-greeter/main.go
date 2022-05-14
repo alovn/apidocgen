@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
+	"time"
 
 	"github.com/alovn/apidoc/examples/common"
 )
@@ -36,6 +37,7 @@ type TestData2 struct {
 }
 type Map map[string]interface{}
 type Map2 map[string]TestData2
+type Map3 map[string]string
 type Node struct {
 	Name  string
 	Nodes map[string]Node
@@ -47,15 +49,17 @@ type TestData struct {
 	// MyFloat64        float64
 	// MyFloat32        float32
 	// MyIntArray []int
-	MyTestData2Array []TestData2
+	MyTestData2Array []TestData2 `json:"my_test_data_2_array,omitempty"`
 	// Int              *int
 	// MyInt            MyInt
-	MyInts []MyInt
-	// Map              Map `json:"amap"`
-	// Map2             Map2
+	MyInts []MyInt `json:"my_ints,omitempty"`
+	// Map    Map `json:"amap"`
+	// Map map[string]string
+	Map2 Map2 `json:"map_2,omitempty"`
 	// Map3             map[string]TestData2
-	Nodes map[string]Node
-	// Map4             map[int]Node
+	// Nodes map[string]Node
+	// Map4 map[int]Node
+	Time1 time.Time `xml:"time_1,omitempty"`
 }
 
 type Request struct {
@@ -66,8 +70,9 @@ type Request struct {
 } //请求对象
 
 type Struct1 struct {
-	Name string
-	Struct2
+	Name  string
+	Time1 time.Time
+	// Struct2
 }
 type Struct2 struct {
 	Name2 string
@@ -93,17 +98,24 @@ type XMLData2 struct {
 	Desc  string
 }
 
+type DemoTime struct {
+	// Title string    //测试
+	Map map[string]string //map测试
+	// Time1 time.Time `xml:"time_1" json:"time_1"`                               //example1
+	// Time2 time.Time `xml:"time_2" json:"time_2" example:"2022-05-14 15:04:05"` //example2
+}
+
 //@title 测试greeter
 //@api GET /greeter
 //@group greeter
 //@accept xml
-//@format xml
-//@request Request
+//@format json
+//@request1 Request
 //@response1 200 TestData "输出对象"
 //@response1 200 Struct1 "struct1"
-//@response 200 XMLResponse{data=[]XMLData} "输出xml"
-//@response 200 XMLResponse{data=[]XMLData2} "输出xml2"
-//@response1 200 common.Response{data=TestData} "输出对象 dd"
+//@response1 200 XMLResponse{data=[]XMLData} "输出xml"
+//@response1 200 XMLResponse{data=[]XMLData2} "输出xml2"
+//@response 200 common.Response{data=DemoTime} "输出对象 dd"
 //@response1 500 Response{code=10010,msg="异常"} "出错了"
 //@response1 500 int 错误
 func greet() {

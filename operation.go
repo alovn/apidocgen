@@ -134,7 +134,7 @@ func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast
 		for _, p := range schema.Properties {
 			tags := p.ParameterTags()
 			if tags != nil {
-				if len(tags) > 0 && !p.HasJSONTag() {
+				if len(tags) > 0 && !p.hasJSONTag() {
 					parameterCount++
 				}
 			}

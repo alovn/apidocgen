@@ -6,8 +6,9 @@
 2. [struct嵌套](#2-struct嵌套)
 3. [int数组](#3-int数组)
 4. [int](#4-int)
-5. [DemoMap](#5-DemoMap)
-6. [XML测试](#6-XML测试)
+5. [map](#5-map)
+6. [xml](#6-xml)
+7. [time](#7-time)
 
 ## apis
 
@@ -32,7 +33,7 @@ __Response__:
       123
     ],
     "int_pointer": 123,  //int
-    "map": {  //object(Map)
+    "map": {  //object(map[string]int)
       "abc": 123  //int
     },
     "object_1": {  //object(handler.DemoObject)
@@ -99,7 +100,7 @@ __Response__:
 
 ---
 
-### 5. DemoMap
+### 5. map
 
 ```text
 GET /user/demo/map
@@ -109,7 +110,7 @@ __Response__:
 
 ```javascript
 //StatusCode: 200 demo map
-{  //object(handler.DemoData)
+{  //object(map[string]handler.DemoData)
   "abc": {  //object(handler.DemoData)
     "count": 123,  //int
     "description": "abc",  //string
@@ -120,7 +121,7 @@ __Response__:
       123
     ],
     "int_pointer": 123,  //int
-    "map": {  //object(Map)
+    "map": {  //object(map[string]int)
       "abc": 123  //int
     },
     "object_1": {  //object(handler.DemoObject)
@@ -136,7 +137,7 @@ __Response__:
 
 ---
 
-### 6. XML测试
+### 6. xml
 
 author: _alovn_
 
@@ -192,6 +193,30 @@ __Response__:
   <code>10010</code> //int, 返回状态码
   <msg>sme error</msg> //string, 返回消息
 </response>
+```
+
+---
+
+### 7. time
+
+author: _alovn_
+
+```text
+GET /user/demo/time
+```
+
+__Response__:
+
+```javascript
+//StatusCode: 200 
+{  //object(common.Response), 通用返回结果
+  "code": 0,  //int, 返回状态码
+  "data": {  //object(handler.DemoTime)
+    "time_1": "2022-05-14T03:32:48.037644+08:00",  //object(time.Time), example1
+    "time_2": 2022-05-14 15:04:05  //object(time.Time), example2
+  },
+  "msg": "success"  //string, 返回消息
+}
 ```
 
 ---

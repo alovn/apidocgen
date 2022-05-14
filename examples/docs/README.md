@@ -1,5 +1,7 @@
 # 用户服务  (svc-user)
 
+version: _@1.0.1_
+
 用户相关的服务接口
 
 1. [账户相关](./apis-account.md)
@@ -38,6 +40,8 @@
 
     5.4. [int](./apis-demo.md#4-int)
 
-    5.5. [DemoMap](./apis-demo.md#5-DemoMap)
+    5.5. [map](./apis-demo.md#5-map)
 
-    5.6. [XML测试](./apis-demo.md#6-XML测试)
+    5.6. [xml](./apis-demo.md#6-xml)
+
+    5.7. [time](./apis-demo.md#7-time)

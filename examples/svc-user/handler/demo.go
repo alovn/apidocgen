@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"net/http"
+	"time"
 
 	"github.com/alovn/apidoc/examples/common"
 )
@@ -73,7 +74,7 @@ func (h *DemoHandler) Int(w http.ResponseWriter, r *http.Request) {
 }
 
 //@api GET /demo/map
-//@title DemoMap
+//@title map
 //@group demo
 //@response 200 DemoMap "demo map"
 func (h *DemoHandler) Map(w http.ResponseWriter, r *http.Request) {
@@ -98,7 +99,7 @@ type DemoXMLResponse2 struct {
 } //XML测试返回对象2
 
 //@api GET /demo/xml
-//@title XML测试
+//@title xml
 //@group demo
 //@accept xml
 //@request DemoXMLRequest
@@ -108,6 +109,26 @@ type DemoXMLResponse2 struct {
 //@response 200 common.Response{code=10010,msg="sme error"}
 //@author alovn
 func (h *AddressHandler) XML(w http.ResponseWriter, r *http.Request) {
+	address := DemoXMLRequest{}
+	res := common.NewResponse(200, "获取成功", address)
+	b, _ := json.Marshal(res)
+	_, _ = w.Write(b)
+}
+
+type DemoTime struct {
+	// Title string    //测试
+	Time1 time.Time `xml:"time_1" json:"time_1"`                               //example1
+	Time2 time.Time `xml:"time_2" json:"time_2" example:"2022-05-14 15:04:05"` //example2
+}
+
+//@api GET /demo/time
+//@title time
+//@group demo
+//@accept xml
+//@format json
+//@response 200 common.Response{code=0,msg="success",data=DemoTime}
+//@author alovn
+func (h *AddressHandler) Time(w http.ResponseWriter, r *http.Request) {
 	address := DemoXMLRequest{}
 	res := common.NewResponse(200, "获取成功", address)
 	b, _ := json.Marshal(res)

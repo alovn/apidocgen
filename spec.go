@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ApiDocSpec struct {
@@ -148,7 +149,7 @@ func (s *TypeSchema) isIgnoreJsonKey() (isIgnore bool) {
 		isIgnore = true
 		return
 	}
-	if s.parameterTags != nil && !s.HasJSONTag() { //request parameter ignore
+	if s.parameterTags != nil && !s.hasJSONTag() { //request parameter ignore
 		isIgnore = true
 		return
 	}
@@ -311,8 +312,11 @@ func (v *TypeSchema) buildComment() string {
 			arrayName = v.ArraySchema.FullName
 		}
 		s += fmt.Sprintf("%s[%s]", ARRAY, arrayName)
-	} else if len(v.Properties) > 0 { //object
-		s += fmt.Sprintf("%s(%s)", v.Type, v.FullName)
+	} else if v.Type == OBJECT { //object
+		s += v.Type
+		if v.FullName != "" {
+			s += fmt.Sprintf("(%s)", v.FullName)
+		}
 	} else {
 		s += v.Type
 	}
@@ -353,26 +357,36 @@ func (v *TypeSchema) JSONKey() (key string, isOmitempty bool) {
 	}
 }
 
-func (v *TypeSchema) HasJSONTag() bool {
+func (v *TypeSchema) hasJSONTag() bool {
 	_, has := v.GetTag("json")
 	return has
 }
 
 func (v *TypeSchema) ExampleValue() string {
-	if v.Type == ARRAY && v.ArraySchema == nil {
-		return NULL
-	}
-	if v.Type == OBJECT && (v.Properties == nil || len(v.Properties) == 0) {
-		return NULL
-	}
 	if v.example != "" {
 		return v.example
 	}
+	if v.Type == ARRAY && v.ArraySchema == nil {
+		return NULL
+	}
 	example := ""
-
 	if val, has := v.GetTag("example"); has {
 		example = val
 	}
+
+	if v.Type == OBJECT && (v.Properties == nil || len(v.Properties) == 0) {
+		if v.FullName == "time.Time" {
+			if example != "" {
+				v.example = example
+				return v.example
+			}
+			b, _ := time.Now().MarshalJSON()
+			v.example = string(b)
+			return v.example
+		}
+		return NULL
+	}
+
 	v.example = getTypeExample(v.Type, example)
 	return v.example
 }
