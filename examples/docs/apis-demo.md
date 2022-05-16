@@ -212,9 +212,9 @@ __Response__:
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
   "data": {  //object(handler.DemoTime)
-    "time_1": "2022-05-16T02:47:13.923883+08:00",  //object(time.Time), example1
+    "time_1": "2022-05-16T11:38:50.59873+08:00",  //object(time.Time), example1
     "time_2": "2022-05-14 15:04:05",  //object(time.Time), example2
-    "time_3": "2022-05-16T02:47:13.924032+08:00"  //object(time.Time)
+    "time_3": "2022-05-16T11:38:50.598876+08:00"  //object(time.Time)
   },
   "msg": "success"  //string, 返回消息
 }

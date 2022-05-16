@@ -32,8 +32,13 @@ type Response struct {
 } //通用返回结果
 
 type TestData2 struct {
-	MyTitle2 string //标题2
-	MyAge2   int
+	MyTitle2 string    `json:"my_title_2,omitempty"` //标题2
+	MyAge2   int       `json:"my_age_2,omitempty"`
+	Data     TestData3 `json:"data,omitempty"`
+}
+type TestData3 struct {
+	MyTitle3 string `json:"my_title_3,omitempty"` //标题3
+	MyAge3   int    `json:"my_age_3,omitempty"`
 }
 type Map map[string]interface{}
 type Map2 map[string]TestData2
@@ -57,9 +62,9 @@ type TestData struct {
 	// Map map[string]string
 	Map2 Map2 `json:"map_2,omitempty"`
 	// Map3             map[string]TestData2
-	// Nodes map[string]Node
+	Nodes map[string]Node `json:"nodes,omitempty"`
 	// Map4 map[int]Node
-	Time1 time.Time `xml:"time_1,omitempty"`
+	Time1 time.Time `xml:"time_1,omitempty" json:"time_1,omitempty"`
 }
 
 type Request struct {
@@ -99,11 +104,12 @@ type XMLData2 struct {
 }
 
 type DemoTime struct {
-	// Title string    //测试
-	// Map     map[string]string //map测试
+	Title   string            //测试
+	Map     map[string]string //map测试
+	Map2    Map2
 	MyTime1 MyTime
-	// Time1 time.Time `xml:"time_1" json:"time_1"`                               //example1
-	// Time2 time.Time `xml:"time_2" json:"time_2" example:"2022-05-14 15:04:05"` //example2
+	Time1   time.Time `xml:"time_1" json:"time_1"`                               //example1
+	Time2   time.Time `xml:"time_2" json:"time_2" example:"2022-05-14 15:04:05"` //example2
 }
 type MyTime time.Time
 
@@ -113,11 +119,11 @@ type MyTime time.Time
 //@accept xml
 //@format json
 //@request1 Request
-//@response1 200 TestData "输出对象"
+//@response 200 TestData "输出对象"
 //@response1 200 Struct1 "struct1"
 //@response1 200 XMLResponse{data=[]XMLData} "输出xml"
 //@response1 200 XMLResponse{data=[]XMLData2} "输出xml2"
-//@response 200 common.Response{data=DemoTime} "输出对象 dd"
+//@response1 200 common.Response{data=DemoTime} "输出对象 dd"
 //@response1 500 Response{code=10010,msg="异常"} "出错了"
 //@response1 500 int 错误
 func greet() {

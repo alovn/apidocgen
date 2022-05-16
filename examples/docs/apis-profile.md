@@ -21,8 +21,8 @@ __Response__:
 {  //object(common.Response), 通用返回结果
   "code": 0,  //int, 返回状态码
   "data": {  //object(handler.ProfileResponse)
-    "extends": {  //object(map[string]string)
-      "abc": "abc"  //string, 扩展信息
+    "extends": {  //object(map[string]string), 扩展信息
+      "abc": "abc"  //string
     },
     "gender": 1,  //uint8
     "username": "abc"  //string
