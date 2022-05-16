@@ -35,6 +35,7 @@ type RegisterResponse struct {
 //@response 200 common.Response{code=10011,msg="password format error"} "密码格式错误"
 //@author alovn
 //@desc 用户注册接口说明
+//@order -1
 func (h *AccountHandler) Register(w http.ResponseWriter, r *http.Request) {
 	res := common.NewResponse(200, "注册成功", &RegisterResponse{
 		Username:   "abc",

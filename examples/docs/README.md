@@ -22,13 +22,13 @@ version: _@1.0.1_
 
     2.5. [获取地址列表](./apis-address.md#5-获取地址列表)(Deprecated)
 
-3. [资料管理](./apis-profile.md)
+3. [菜单管理](./apis-menu.md)
 
-    3.1. [获取用户资料](./apis-profile.md#1-获取用户资料)
+    3.1. [获取菜单节点](./apis-menu.md#1-获取菜单节点)
 
-4. [菜单管理](./apis-menu.md)
+4. [资料管理](./apis-profile.md)
 
-    4.1. [获取菜单节点](./apis-menu.md#1-获取菜单节点)
+    4.1. [获取用户资料](./apis-profile.md#1-获取用户资料)
 
 5. [测试示例](./apis-demo.md)
 

@@ -37,6 +37,7 @@ type DemoMap map[string]DemoData
 //@title struct数组
 //@group demo
 //@response 200 []DemoData "demo struct array"
+//@version 1.0.2.1
 func (h *DemoHandler) StructArray(w http.ResponseWriter, r *http.Request) {
 
 }

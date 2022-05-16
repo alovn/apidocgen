@@ -74,6 +74,12 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		return operation.ParseParametersComment(strings.TrimPrefix(lowerAttribute, "@"), lineRemainder, astFile)
 	case deprecatedAttr, "deprecated:":
 		operation.Deprecated = true
+	case orderAttr:
+		if i, err := strconv.Atoi(lineRemainder); err == nil {
+			operation.Order = i
+		}
+	case versionAttr:
+		operation.Version = lineRemainder
 	}
 	return nil
 }
@@ -105,7 +111,6 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 
 	operation.HTTPMethod = httpMethod
 	operation.Api = matches[2]
-	operation.FullURL = fmt.Sprintf("%s/%s", strings.TrimSuffix(operation.parser.doc.BaseURL, "/"), strings.TrimPrefix(operation.Api, "/"))
 	return nil
 }
 

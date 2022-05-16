@@ -11,14 +11,14 @@ import (
 )
 
 type ApiDocSpec struct {
-	Service     string
-	Title       string
-	Version     string
-	Description string
-	Scheme      string
-	BaseURL     string
-	Groups      []*ApiGroupSpec
-	Apis        []*ApiSpec
+	Service       string
+	Title         string
+	Version       string
+	Description   string
+	BaseURL       string
+	Groups        []*ApiGroupSpec
+	UngroupedApis []*ApiSpec
+	TotalCount    int
 }
 
 type ApiGroupSpec struct {
@@ -26,13 +26,14 @@ type ApiGroupSpec struct {
 	Title       string
 	Description string
 	Apis        []*ApiSpec
+	Order       int //sort
 }
 
 type ApiSpec struct {
+	doc         *ApiDocSpec
 	Title       string
 	HTTPMethod  string
 	Api         string
-	FullURL     string
 	Version     string
 	Accept      string //json,xml,form
 	Format      string //json,xml
@@ -42,6 +43,11 @@ type ApiSpec struct {
 	Group       string
 	Responses   []*ApiResponseSpec
 	Requests    ApiRequestSpec
+	Order       int //sort
+}
+
+func (a *ApiSpec) FullURL() string {
+	return fmt.Sprintf("%s/%s", strings.TrimSuffix(a.doc.BaseURL, "/"), strings.TrimPrefix(a.Api, "/"))
 }
 
 type ApiRequestSpec struct {

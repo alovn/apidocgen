@@ -27,6 +27,11 @@ ___Deprecated___
 author: _{{$v.Author}}_
 {{- end}}
 
+{{- if $v.Version}}
+
+version: _{{$v.Version}}_
+{{- end}}
+
 ```text
 {{$v.HTTPMethod}} {{$v.FullURL}}
 ```

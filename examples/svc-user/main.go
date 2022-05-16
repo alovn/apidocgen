@@ -53,6 +53,7 @@ func main() {
 	//@group demo
 	//@title 测试示例
 	//@desc 其它一些示例演示
+	//@order 6
 	{
 		demo := handler.NewDemoHandler()
 		mux.HandleFunc("/user/demo/struct_array", demo.StructArray)

@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -33,6 +34,7 @@ const (
 	formatAttr      = "@format"
 	deprecatedAttr  = "@deprecated"
 	authorAttr      = "@author"
+	orderAttr       = "@order" //for sort
 
 	//doc
 	baseURLAttr = "@baseurl"
@@ -77,19 +79,12 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 	}
 }
 
-func (parser *Parser) Parse(searchDir string, mainFile string) error {
+func (parser *Parser) Parse(searchDir string) error {
 	packageDir, err := getPkgName(searchDir)
 	if err != nil {
 		return err
 	}
 	if err = parser.getAllGoFileInfo(packageDir, searchDir); err != nil {
-		return err
-	}
-	mainPath, err := filepath.Abs(filepath.Join(searchDir, mainFile))
-	if err != nil {
-		return err
-	}
-	if err = parser.parseApiDocInfo(mainPath); err != nil {
 		return err
 	}
 	if err = parser.packages.ParseTypes(); err != nil {
@@ -105,60 +100,62 @@ func (parser *Parser) GetApiDoc() *ApiDocSpec {
 	return parser.doc
 }
 
-func (parser *Parser) parseApiDocInfo(mainPath string) error {
-	fileTree, err := goparser.ParseFile(token.NewFileSet(), mainPath, nil, goparser.ParseComments)
-	if err != nil {
-		return fmt.Errorf("cannot parse source files %s: %s", mainPath, err)
-	}
-	for _, comment := range fileTree.Comments {
+func (parser *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
+	//parse group
+	for _, comment := range astFile.Comments {
 		comments := strings.Split(comment.Text(), "\n")
-		if !isApiDocComment(comments) {
-			continue
-		}
-		if isApiGroupComment(comments) {
-			if err := parser.parseApiGroupInfo(comments); err != nil {
+		if isApiDocGroupComment(comments) {
+			if err := parser.parseApiDocGroupInfo(comments); err != nil {
 				return err
 			}
 			continue
 		}
-
-		err = parseApiDocInfo(parser, comments)
-		if err != nil {
-			return err
-		}
 	}
-	return nil
-}
-
-func (parser *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 	for _, astDescription := range astFile.Decls {
-		astDeclaration, ok := astDescription.(*ast.FuncDecl)
-		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-			if astDeclaration.Name.Name == "main" {
-				continue
-			}
-			operation := NewOperation(parser)
-			for _, comment := range astDeclaration.Doc.List {
-				err := operation.ParseComment(comment.Text, astFile)
-				if err != nil {
-					return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
-				}
-			}
-			if operation.ApiSpec.Group == "" {
-				parser.doc.Apis = append(parser.doc.Apis, &operation.ApiSpec)
-			} else {
-				if g, ok := parser.groups[operation.ApiSpec.Group]; ok {
-					g.Apis = append(g.Apis, &operation.ApiSpec)
-				} else {
-					group := ApiGroupSpec{
-						Group:       operation.ApiSpec.Group,
-						Title:       operation.ApiSpec.Group,
-						Description: "",
+		switch astDeclaration := astDescription.(type) {
+		case *ast.FuncDecl:
+			if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
+				comments := strings.Split(astDeclaration.Doc.Text(), "\n")
+				if astDeclaration.Name.Name == "main" { //parse service
+					if isApiDocServiceComment(comments) {
+						if err := parser.parseApiDocServiceInfo(comments); err != nil {
+							return err
+						}
+						continue
 					}
-					group.Apis = append(group.Apis, &operation.ApiSpec)
-					parser.groups[operation.ApiSpec.Group] = &group
-					parser.doc.Groups = append(parser.doc.Groups, &group)
 				}
+				if isApiDocGroupComment(comments) { //parse group, if in func decl
+					if err := parser.parseApiDocGroupInfo(comments); err != nil {
+						return err
+					}
+					continue
+				}
+				//parse apis
+				operation := NewOperation(parser)
+				for _, comment := range comments {
+					err := operation.ParseComment(comment, astFile)
+					if err != nil {
+						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
+					}
+				}
+				operation.ApiSpec.doc = parser.doc //ptr
+				if operation.ApiSpec.Group == "" {
+					parser.doc.UngroupedApis = append(parser.doc.UngroupedApis, &operation.ApiSpec)
+				} else {
+					if g, ok := parser.groups[operation.ApiSpec.Group]; ok {
+						g.Apis = append(g.Apis, &operation.ApiSpec)
+					} else {
+						group := ApiGroupSpec{
+							Group:       operation.ApiSpec.Group,
+							Title:       operation.ApiSpec.Group,
+							Description: "",
+						}
+						group.Apis = append(group.Apis, &operation.ApiSpec)
+						parser.groups[operation.ApiSpec.Group] = &group
+						parser.doc.Groups = append(parser.doc.Groups, &group)
+					}
+				}
+				parser.doc.TotalCount += 1
 			}
 		}
 	}
@@ -166,7 +163,7 @@ func (parser *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 	return nil
 }
 
-func (parser *Parser) parseApiGroupInfo(comments []string) error {
+func (parser *Parser) parseApiDocGroupInfo(comments []string) error {
 	previousAttribute := ""
 	var group ApiGroupSpec
 	for line := 0; line < len(comments); line++ {
@@ -188,6 +185,10 @@ func (parser *Parser) parseApiGroupInfo(comments []string) error {
 				continue
 			}
 			group.Description = value
+		case orderAttr:
+			if i, err := strconv.Atoi(value); err == nil {
+				group.Order = i
+			}
 		}
 	}
 	if group.Group == "" {
@@ -197,6 +198,7 @@ func (parser *Parser) parseApiGroupInfo(comments []string) error {
 		g.Group = group.Group
 		g.Title = group.Title
 		g.Description = group.Description
+		g.Order = group.Order
 	} else {
 		parser.groups[group.Group] = &group
 		parser.doc.Groups = append(parser.doc.Groups, &group)
@@ -204,7 +206,10 @@ func (parser *Parser) parseApiGroupInfo(comments []string) error {
 	return nil
 }
 
-func parseApiDocInfo(parser *Parser, comments []string) error {
+func (parser *Parser) parseApiDocServiceInfo(comments []string) error {
+	if parser.doc.Service != "" {
+		return errors.New("error: service has been set, multiple service?")
+	}
 	previousAttribute := ""
 	for line := 0; line < len(comments); line++ {
 		commentLine := comments[line]
@@ -234,7 +239,7 @@ func parseApiDocInfo(parser *Parser, comments []string) error {
 	return nil
 }
 
-func isApiDocComment(comments []string) bool {
+func isApiDocServiceComment(comments []string) bool {
 	for _, commentLine := range comments {
 		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 		switch attribute {
@@ -244,21 +249,21 @@ func isApiDocComment(comments []string) bool {
 			return false
 		}
 	}
-
-	return true
+	return false
 }
 
-func isApiGroupComment(comments []string) bool {
+func isApiDocGroupComment(comments []string) bool {
+	isGroup := false
 	for _, commentLine := range comments {
 		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 		switch attribute {
-		case apiAttr, successAttr, failureAttr, responseAttr:
+		case serviceAttr, apiAttr, successAttr, failureAttr, responseAttr:
 			return false
 		case groupAttr:
-			return true
+			isGroup = true
 		}
 	}
-	return false
+	return isGroup
 }
 
 func getPkgName(searchDir string) (string, error) {
