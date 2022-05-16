@@ -281,7 +281,6 @@ func (s *TypeSchema) parseXML(depth int, sb *strings.Builder, isNewLine bool) {
 			}
 		}
 		sb.WriteString("\n" + prefix + fmt.Sprintf("</%s>", xmlName))
-
 	} else if s.Type == ARRAY && s.ArraySchema != nil {
 		if s.ArraySchema.Type == OBJECT {
 			s.ArraySchema.parseXML(depth, sb, true)
@@ -373,15 +372,13 @@ func (v *TypeSchema) ExampleValue() string {
 	if val, has := v.GetTag("example"); has {
 		example = val
 	}
-
 	if v.Type == OBJECT && (v.Properties == nil || len(v.Properties) == 0) {
 		if v.FullName == "time.Time" {
 			if example != "" {
-				v.example = example
+				v.example = fmt.Sprintf("\"%s\"", example)
 				return v.example
 			}
-			b, _ := time.Now().MarshalJSON()
-			v.example = string(b)
+			v.example = getTypeExample(v.FullName, example)
 			return v.example
 		}
 		return NULL
@@ -537,6 +534,12 @@ func getTypeExample(typeName, example string) string {
 		return fmt.Sprintf("%t", exampleBool(example))
 	case "any":
 		return "null"
+	case "time.Time":
+		if example != "" {
+			return fmt.Sprintf("\"%s\"", example)
+		}
+		b, _ := time.Now().MarshalJSON()
+		return string(b)
 	}
 	return example
 }

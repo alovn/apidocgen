@@ -119,7 +119,10 @@ type DemoTime struct {
 	// Title string    //测试
 	Time1 time.Time `xml:"time_1" json:"time_1"`                               //example1
 	Time2 time.Time `xml:"time_2" json:"time_2" example:"2022-05-14 15:04:05"` //example2
+	Time3 MyTime    `xml:"time_3" json:"time_3"`
 }
+
+type MyTime time.Time
 
 //@api GET /demo/time
 //@title time

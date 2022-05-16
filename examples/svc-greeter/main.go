@@ -100,10 +100,12 @@ type XMLData2 struct {
 
 type DemoTime struct {
 	// Title string    //测试
-	Map map[string]string //map测试
+	// Map     map[string]string //map测试
+	MyTime1 MyTime
 	// Time1 time.Time `xml:"time_1" json:"time_1"`                               //example1
 	// Time2 time.Time `xml:"time_2" json:"time_2" example:"2022-05-14 15:04:05"` //example2
 }
+type MyTime time.Time
 
 //@title 测试greeter
 //@api GET /greeter

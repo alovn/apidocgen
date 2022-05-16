@@ -411,7 +411,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field
 
 	fmt.Printf("Generating %s\n", typeName)
 
-	// return parser.parseTypeExpr(typeSpecDef.File, field, typeSpecDef.TypeSpec.Type)
+	// return parser.parseTypeExpr(typeSpecDef.File, field, typeSpecDef.TypeSpec.Type, parentSchema)
 
 	switch expr := typeSpecDef.TypeSpec.Type.(type) {
 	// type Foo struct {...}
@@ -430,6 +430,10 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, field *ast.Field
 		return schema, err
 	case *ast.Ident:
 		return parser.getTypeSchema(expr.Name, typeSpecDef.File, field, parentSchema)
+	case *ast.SelectorExpr:
+		if xIdent, ok := expr.X.(*ast.Ident); ok {
+			return parser.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), typeSpecDef.File, field, parentSchema)
+		}
 	case *ast.MapType:
 		if keyIdent, ok := expr.Key.(*ast.Ident); ok {
 			if IsGolangPrimitiveType(keyIdent.Name) {
