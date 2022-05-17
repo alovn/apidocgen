@@ -544,7 +544,8 @@ func getTypeExample(typeName, example string) string {
 		if example != "" {
 			return fmt.Sprintf("\"%s\"", example)
 		}
-		b, _ := time.Now().MarshalJSON()
+		t := time.Date(2022, 5, 16, 16, 47, 48, 741899000, time.Local) //use this time, prevent changes everytime build docs
+		b, _ := t.MarshalJSON()
 		return string(b)
 	}
 	return example

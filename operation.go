@@ -159,6 +159,9 @@ func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast
 			}
 		}
 		if parameterCount < len(schema.Properties) {
+			if operation.Accept == "" {
+				operation.Accept = "json"
+			}
 			operation.Requests.Accept = operation.Accept
 			operation.Requests.Schema = schema
 		}
@@ -212,6 +215,9 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	// fmt.Printf("schema:%+v\n", schema)
 	// fmt.Println("json:")
 	// fmt.Println(j)
+	if operation.Format == "" {
+		operation.Format = "json"
+	}
 	operation.Responses = append(operation.Responses, &ApiResponseSpec{
 		StatusCode:  code,
 		Format:      operation.Format,

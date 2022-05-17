@@ -79,18 +79,21 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 	}
 }
 
-func (parser *Parser) Parse(searchDir string) error {
-	packageDir, err := getPkgName(searchDir)
-	if err != nil {
+func (parser *Parser) Parse(searchDirs []string) error {
+	for _, searchDir := range searchDirs {
+		fmt.Println("search dir:", searchDir)
+		packageDir, err := getPkgName(searchDir)
+		if err != nil {
+			return err
+		}
+		if err = parser.getAllGoFileInfo(packageDir, searchDir); err != nil {
+			return err
+		}
+	}
+	if err := parser.packages.ParseTypes(); err != nil {
 		return err
 	}
-	if err = parser.getAllGoFileInfo(packageDir, searchDir); err != nil {
-		return err
-	}
-	if err = parser.packages.ParseTypes(); err != nil {
-		return err
-	}
-	if err = rangeFiles(parser.packages.files, parser.parseApiInfos); err != nil {
+	if err := rangeFiles(parser.packages.files, parser.parseApiInfos); err != nil {
 		return err
 	}
 	return nil
@@ -104,8 +107,8 @@ func (parser *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 	//parse group
 	for _, comment := range astFile.Comments {
 		comments := strings.Split(comment.Text(), "\n")
-		if isApiDocGroupComment(comments) {
-			if err := parser.parseApiDocGroupInfo(comments); err != nil {
+		if isApiGroupComment(comments) {
+			if err := parser.parseApiGroupInfo(comments); err != nil {
 				return err
 			}
 			continue
@@ -117,15 +120,15 @@ func (parser *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 			if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
 				comments := strings.Split(astDeclaration.Doc.Text(), "\n")
 				if astDeclaration.Name.Name == "main" { //parse service
-					if isApiDocServiceComment(comments) {
-						if err := parser.parseApiDocServiceInfo(comments); err != nil {
+					if isApiDocComment(comments) {
+						if err := parser.parseApiDocInfo(comments); err != nil {
 							return err
 						}
 						continue
 					}
 				}
-				if isApiDocGroupComment(comments) { //parse group, if in func decl
-					if err := parser.parseApiDocGroupInfo(comments); err != nil {
+				if isApiGroupComment(comments) { //parse group, if in func decl
+					if err := parser.parseApiGroupInfo(comments); err != nil {
 						return err
 					}
 					continue
@@ -138,7 +141,7 @@ func (parser *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
 					}
 				}
-				operation.ApiSpec.doc = parser.doc //ptr
+				operation.ApiSpec.doc = parser.doc //ptr, for build full url
 				if operation.ApiSpec.Group == "" {
 					parser.doc.UngroupedApis = append(parser.doc.UngroupedApis, &operation.ApiSpec)
 				} else {
@@ -163,7 +166,7 @@ func (parser *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 	return nil
 }
 
-func (parser *Parser) parseApiDocGroupInfo(comments []string) error {
+func (parser *Parser) parseApiGroupInfo(comments []string) error {
 	previousAttribute := ""
 	var group ApiGroupSpec
 	for line := 0; line < len(comments); line++ {
@@ -206,7 +209,7 @@ func (parser *Parser) parseApiDocGroupInfo(comments []string) error {
 	return nil
 }
 
-func (parser *Parser) parseApiDocServiceInfo(comments []string) error {
+func (parser *Parser) parseApiDocInfo(comments []string) error {
 	if parser.doc.Service != "" {
 		return errors.New("error: service has been set, multiple service?")
 	}
@@ -239,7 +242,7 @@ func (parser *Parser) parseApiDocServiceInfo(comments []string) error {
 	return nil
 }
 
-func isApiDocServiceComment(comments []string) bool {
+func isApiDocComment(comments []string) bool {
 	for _, commentLine := range comments {
 		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 		switch attribute {
@@ -252,7 +255,7 @@ func isApiDocServiceComment(comments []string) bool {
 	return false
 }
 
-func isApiDocGroupComment(comments []string) bool {
+func isApiGroupComment(comments []string) bool {
 	isGroup := false
 	for _, commentLine := range comments {
 		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
@@ -359,7 +362,6 @@ func fullTypeName(pkgName, typeName string) string {
 	if pkgName != "" {
 		return pkgName + "." + typeName
 	}
-
 	return typeName
 }
 
@@ -398,7 +400,6 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, parentSchema *Ty
 			PkgPath:  typeSpecDef.PkgPath,
 			Parent:   parentSchema,
 			Comment:  fmt.Sprintf("%s(Recursion...)", strings.TrimSuffix(typeSpecDef.TypeSpec.Comment.Text(), "\n")),
-			// TagValue: getAllTagValue(field),
 		}, nil
 	}
 
@@ -544,13 +545,8 @@ func (parser *Parser) parseStruct(typeSpecDef *TypeSpecDef, file *ast.File, fiel
 		if schema == nil {
 			continue
 		}
-		if field != nil {
-			if field.Names != nil {
-				schema.Name = field.Names[0].Name
-			}
-			schema.TagValue = getAllTagValue(field)
-			schema.Comment = strings.TrimSuffix(field.Comment.Text(), "\n")
-		}
+		schema.TagValue = getAllTagValue(field)
+		schema.Comment = strings.TrimSuffix(field.Comment.Text(), "\n")
 		if field.Names == nil { //nested struct, replace with child properties
 			for _, p := range schema.Properties {
 				if _, ok := structSchema.Properties[strings.ToLower(p.Name)]; !ok { //if not exists key
@@ -558,6 +554,7 @@ func (parser *Parser) parseStruct(typeSpecDef *TypeSpecDef, file *ast.File, fiel
 				}
 			}
 		} else {
+			schema.Name = field.Names[0].Name
 			structSchema.Properties[strings.ToLower(schema.Name)] = schema
 		}
 	}

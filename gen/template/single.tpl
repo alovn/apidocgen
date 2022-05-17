@@ -58,7 +58,7 @@ __{{$p.Name}}__|_{{$p.ParameterTypes}}_|{{$p.DataType}}|{{$p.Required}}|{{$p.Val
 
 _body_:
 
-```javascript
+```{{if eq $v.Accept "json"}}javascript{{else}}{{$v.Accept}}{{end}}
 {{$v.Requests.Body}}
 ```
 {{- end}}
@@ -68,7 +68,7 @@ _body_:
 __Response__:
 {{- range $res := $v.Responses}}
 
-```javascript
+```{{if eq $v.Format "json"}}javascript{{else}}{{$v.Format}}{{end}}
 //StatusCode: {{$res.StatusCode}} {{$res.Description}}
 {{$res.Body}}
 ```
