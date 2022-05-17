@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/alovn/apidoc/gen"
+	"github.com/alovn/apidocgen/gen"
 )
 
 func main() {
@@ -23,16 +23,16 @@ func main() {
 	flag.BoolVar(&isHelp, "help", false, "--help")
 	flag.Parse()
 	if isHelp {
-		fmt.Println(`apidoc is a tool for Go to generate apis markdown docs.
+		fmt.Println(`apidocgen is a tool for Go to generate apis markdown docs.
 
 Usage:
-  apidoc --dir= --output= --template= --single
+  apidocgen --dir= --excludes= --output= --template= --single
 
 Flags:
 	--dir:		Search apis dir, comma separated, default .
 	--excludes:	Exclude directories and files when searching, comma separated
 	--output: 	Generate markdown files dir, default ./docs/
-	--template: Custom template files dir.
+	--template:	Custom template files dir.
 	--single: 	If true, generate a single markdown file, default false`)
 		return
 	}
@@ -40,7 +40,7 @@ Flags:
 		SearchDir:       searchDir,
 		OutputDir:       outputDir,
 		TemplateDir:     templateDir,
-		Excludes:        excludesDir,
+		ExcludesDir:     excludesDir,
 		IsGenSingleFile: isSingle,
 	})
 	if err := g.Build(); err != nil {

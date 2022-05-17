@@ -1,4 +1,4 @@
-package apidoc
+package parser
 
 import (
 	"errors"
@@ -79,36 +79,36 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 	}
 }
 
-func (parser *Parser) Parse(searchDirs []string) error {
+func (p *Parser) Parse(searchDirs []string) error {
 	for _, searchDir := range searchDirs {
 		fmt.Println("search dir:", searchDir)
 		packageDir, err := getPkgName(searchDir)
 		if err != nil {
 			return err
 		}
-		if err = parser.getAllGoFileInfo(packageDir, searchDir); err != nil {
+		if err = p.getAllGoFileInfo(packageDir, searchDir); err != nil {
 			return err
 		}
 	}
-	if err := parser.packages.ParseTypes(); err != nil {
+	if err := p.packages.ParseTypes(); err != nil {
 		return err
 	}
-	if err := rangeFiles(parser.packages.files, parser.parseApiInfos); err != nil {
+	if err := rangeFiles(p.packages.files, p.parseApiInfos); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (parser *Parser) GetApiDoc() *ApiDocSpec {
-	return parser.doc
+func (p *Parser) GetApiDoc() *ApiDocSpec {
+	return p.doc
 }
 
-func (parser *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
+func (p *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 	//parse group
 	for _, comment := range astFile.Comments {
 		comments := strings.Split(comment.Text(), "\n")
 		if isApiGroupComment(comments) {
-			if err := parser.parseApiGroupInfo(comments); err != nil {
+			if err := p.parseApiGroupInfo(comments); err != nil {
 				return err
 			}
 			continue
@@ -121,31 +121,31 @@ func (parser *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 				comments := strings.Split(astDeclaration.Doc.Text(), "\n")
 				if astDeclaration.Name.Name == "main" { //parse service
 					if isApiDocComment(comments) {
-						if err := parser.parseApiDocInfo(comments); err != nil {
+						if err := p.parseApiDocInfo(comments); err != nil {
 							return err
 						}
 						continue
 					}
 				}
 				if isApiGroupComment(comments) { //parse group, if in func decl
-					if err := parser.parseApiGroupInfo(comments); err != nil {
+					if err := p.parseApiGroupInfo(comments); err != nil {
 						return err
 					}
 					continue
 				}
 				//parse apis
-				operation := NewOperation(parser)
+				operation := NewOperation(p)
 				for _, comment := range comments {
 					err := operation.ParseComment(comment, astFile)
 					if err != nil {
 						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
 					}
 				}
-				operation.ApiSpec.doc = parser.doc //ptr, for build full url
+				operation.ApiSpec.doc = p.doc //ptr, for build full url
 				if operation.ApiSpec.Group == "" {
-					parser.doc.UngroupedApis = append(parser.doc.UngroupedApis, &operation.ApiSpec)
+					p.doc.UngroupedApis = append(p.doc.UngroupedApis, &operation.ApiSpec)
 				} else {
-					if g, ok := parser.groups[operation.ApiSpec.Group]; ok {
+					if g, ok := p.groups[operation.ApiSpec.Group]; ok {
 						g.Apis = append(g.Apis, &operation.ApiSpec)
 					} else {
 						group := ApiGroupSpec{
@@ -154,11 +154,11 @@ func (parser *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 							Description: "",
 						}
 						group.Apis = append(group.Apis, &operation.ApiSpec)
-						parser.groups[operation.ApiSpec.Group] = &group
-						parser.doc.Groups = append(parser.doc.Groups, &group)
+						p.groups[operation.ApiSpec.Group] = &group
+						p.doc.Groups = append(p.doc.Groups, &group)
 					}
 				}
-				parser.doc.TotalCount += 1
+				p.doc.TotalCount += 1
 			}
 		}
 	}
@@ -166,7 +166,7 @@ func (parser *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 	return nil
 }
 
-func (parser *Parser) parseApiGroupInfo(comments []string) error {
+func (p *Parser) parseApiGroupInfo(comments []string) error {
 	previousAttribute := ""
 	var group ApiGroupSpec
 	for line := 0; line < len(comments); line++ {
@@ -197,20 +197,20 @@ func (parser *Parser) parseApiGroupInfo(comments []string) error {
 	if group.Group == "" {
 		return errors.New("error: group ")
 	}
-	if g, ok := parser.groups[group.Group]; ok {
+	if g, ok := p.groups[group.Group]; ok {
 		g.Group = group.Group
 		g.Title = group.Title
 		g.Description = group.Description
 		g.Order = group.Order
 	} else {
-		parser.groups[group.Group] = &group
-		parser.doc.Groups = append(parser.doc.Groups, &group)
+		p.groups[group.Group] = &group
+		p.doc.Groups = append(p.doc.Groups, &group)
 	}
 	return nil
 }
 
-func (parser *Parser) parseApiDocInfo(comments []string) error {
-	if parser.doc.Service != "" {
+func (p *Parser) parseApiDocInfo(comments []string) error {
+	if p.doc.Service != "" {
 		return errors.New("error: service has been set, multiple service?")
 	}
 	previousAttribute := ""
@@ -224,19 +224,19 @@ func (parser *Parser) parseApiDocInfo(comments []string) error {
 		}
 		switch strings.ToLower(attribute) {
 		case serviceAttr:
-			parser.doc.Service = value
+			p.doc.Service = value
 		case versionAttr:
-			parser.doc.Version = value
+			p.doc.Version = value
 		case titleAttr:
-			parser.doc.Title = value
+			p.doc.Title = value
 		case descriptionAttr:
 			if multilineBlock {
-				parser.doc.Description += "\n" + value
+				p.doc.Description += "\n" + value
 				continue
 			}
-			parser.doc.Description = value
+			p.doc.Description = value
 		case baseURLAttr:
-			parser.doc.BaseURL = value
+			p.doc.BaseURL = value
 		}
 	}
 	return nil
@@ -296,9 +296,9 @@ func getPkgName(searchDir string) (string, error) {
 }
 
 // GetAllGoFileInfo gets all Go source files information for given searchDir.
-func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
+func (p *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 	return filepath.Walk(searchDir, func(path string, f os.FileInfo, _ error) error {
-		err := parser.Skip(path, f)
+		err := p.Skip(path, f)
 		if err != nil {
 			return err
 		}
@@ -312,11 +312,11 @@ func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 			return err
 		}
 
-		return parser.parseFile(filepath.ToSlash(filepath.Dir(filepath.Clean(filepath.Join(packageDir, relPath)))), path, nil)
+		return p.parseFile(filepath.ToSlash(filepath.Dir(filepath.Clean(filepath.Join(packageDir, relPath)))), path, nil)
 	})
 }
 
-func (parser *Parser) parseFile(packageDir, path string, src interface{}) error {
+func (p *Parser) parseFile(packageDir, path string, src interface{}) error {
 	if strings.HasSuffix(strings.ToLower(path), "_test.go") || filepath.Ext(path) != ".go" {
 		return nil
 	}
@@ -327,7 +327,7 @@ func (parser *Parser) parseFile(packageDir, path string, src interface{}) error 
 		return fmt.Errorf("ParseFile error:%+v", err)
 	}
 
-	err = parser.packages.CollectAstFile(packageDir, path, astFile)
+	err = p.packages.CollectAstFile(packageDir, path, astFile)
 	if err != nil {
 		return err
 	}
@@ -336,8 +336,8 @@ func (parser *Parser) parseFile(packageDir, path string, src interface{}) error 
 }
 
 // Skip returns filepath.SkipDir error if match vendor and hidden folder.
-func (parser *Parser) Skip(path string, f os.FileInfo) error {
-	return walkWith(parser.excludes)(path, f)
+func (p *Parser) Skip(path string, f os.FileInfo) error {
+	return walkWith(p.excludes)(path, f)
 }
 
 func walkWith(excludes map[string]struct{}) func(path string, fileInfo os.FileInfo) error {
@@ -365,7 +365,7 @@ func fullTypeName(pkgName, typeName string) string {
 	return typeName
 }
 
-func (parser *Parser) getTypeSchema(typeName string, file *ast.File, parentSchema *TypeSchema) (*TypeSchema, error) {
+func (p *Parser) getTypeSchema(typeName string, file *ast.File, parentSchema *TypeSchema) (*TypeSchema, error) {
 	if IsGolangPrimitiveType(typeName) {
 		return &TypeSchema{ //root type
 			Name:     typeName,
@@ -375,12 +375,12 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, parentSchem
 		}, nil
 	}
 
-	typeSpecDef := parser.packages.FindTypeSpec(typeName, file, true)
+	typeSpecDef := p.packages.FindTypeSpec(typeName, file, true)
 	if typeSpecDef == nil {
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}
 
-	schema, err := parser.ParseDefinition(typeSpecDef, parentSchema)
+	schema, err := p.ParseDefinition(typeSpecDef, parentSchema)
 	if err != nil {
 		return nil, err
 	}
@@ -389,7 +389,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, parentSchem
 
 // ParseDefinition parses given type spec that corresponds to the type under
 // given name and package
-func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, parentSchema *TypeSchema) (*TypeSchema, error) {
+func (p *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, parentSchema *TypeSchema) (*TypeSchema, error) {
 	typeName := typeSpecDef.FullName()
 	if parentSchema != nil && parentSchema.isInTypeChain(typeSpecDef) {
 		fmt.Printf("Skipping '%s', recursion detected.\n", typeName)
@@ -408,12 +408,12 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, parentSchema *Ty
 	switch expr := typeSpecDef.TypeSpec.Type.(type) {
 	// type Foo struct {...}
 	case *ast.StructType:
-		return parser.parseStruct(typeSpecDef, typeSpecDef.File, expr.Fields, parentSchema)
+		return p.parseStruct(typeSpecDef, typeSpecDef.File, expr.Fields, parentSchema)
 	case *ast.Ident:
-		return parser.getTypeSchema(expr.Name, typeSpecDef.File, parentSchema)
+		return p.getTypeSchema(expr.Name, typeSpecDef.File, parentSchema)
 	case *ast.SelectorExpr:
 		if xIdent, ok := expr.X.(*ast.Ident); ok {
-			return parser.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), typeSpecDef.File, parentSchema)
+			return p.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), typeSpecDef.File, parentSchema)
 		}
 	case *ast.MapType:
 		if keyIdent, ok := expr.Key.(*ast.Ident); ok {
@@ -424,7 +424,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, parentSchema *Ty
 					Properties: map[string]*TypeSchema{},
 					Parent:     parentSchema,
 				}
-				schema, err := parser.parseTypeExpr(typeSpecDef.File, expr.Value, mapSchema)
+				schema, err := p.parseTypeExpr(typeSpecDef.File, expr.Value, mapSchema)
 				if err != nil {
 					return nil, err
 				}
@@ -452,7 +452,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, parentSchema *Ty
 	return &sch, nil
 }
 
-func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, parentSchema *TypeSchema) (*TypeSchema, error) {
+func (p *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, parentSchema *TypeSchema) (*TypeSchema, error) {
 	switch expr := typeExpr.(type) {
 	// type Foo interface{}
 	case *ast.InterfaceType:
@@ -465,19 +465,19 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, parentSch
 
 	// type Foo Baz
 	case *ast.Ident:
-		return parser.getTypeSchema(expr.Name, file, parentSchema)
+		return p.getTypeSchema(expr.Name, file, parentSchema)
 	// type Foo *Baz
 	case *ast.StarExpr:
-		return parser.parseTypeExpr(file, expr.X, parentSchema)
+		return p.parseTypeExpr(file, expr.X, parentSchema)
 
 	// type Foo pkg.Bar
 	case *ast.SelectorExpr:
 		if xIdent, ok := expr.X.(*ast.Ident); ok {
-			return parser.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), file, parentSchema)
+			return p.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), file, parentSchema)
 		}
 	// type Foo []Baz
 	case *ast.ArrayType:
-		itemSchema, err := parser.parseTypeExpr(file, expr.Elt, parentSchema)
+		itemSchema, err := p.parseTypeExpr(file, expr.Elt, parentSchema)
 		if err != nil {
 			return nil, err
 		}
@@ -492,7 +492,7 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, parentSch
 					Properties: map[string]*TypeSchema{},
 					Parent:     parentSchema,
 				}
-				schema, err := parser.parseTypeExpr(file, expr.Value, mapSchema)
+				schema, err := p.parseTypeExpr(file, expr.Value, mapSchema)
 				if err != nil {
 					return nil, err
 				}
@@ -518,7 +518,7 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, parentSch
 	return &TypeSchema{Type: OBJECT}, nil
 }
 
-func (parser *Parser) parseStruct(typeSpecDef *TypeSpecDef, file *ast.File, fields *ast.FieldList, parentSchama *TypeSchema) (*TypeSchema, error) {
+func (p *Parser) parseStruct(typeSpecDef *TypeSpecDef, file *ast.File, fields *ast.FieldList, parentSchama *TypeSchema) (*TypeSchema, error) {
 	structSchema := &TypeSchema{
 		Name:        typeSpecDef.Name(),
 		FullName:    typeSpecDef.FullName(),
@@ -538,7 +538,7 @@ func (parser *Parser) parseStruct(typeSpecDef *TypeSpecDef, file *ast.File, fiel
 				continue
 			}
 		}
-		schema, err := parser.parseTypeExpr(file, field.Type, structSchema)
+		schema, err := p.parseTypeExpr(file, field.Type, structSchema)
 		if err != nil {
 			return nil, err
 		}

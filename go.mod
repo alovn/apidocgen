@@ -1,4 +1,4 @@
-module github.com/alovn/apidoc
+module github.com/alovn/apidocgen
 
 go 1.17
 

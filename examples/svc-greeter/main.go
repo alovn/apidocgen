@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/alovn/apidoc/examples/common"
+	"github.com/alovn/apidocgen/examples/common"
 )
 
 //@title greeter服务

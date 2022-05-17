@@ -1,4 +1,4 @@
-package apidoc
+package parser
 
 import (
 	"fmt"
@@ -91,8 +91,8 @@ type TypeSchema struct {
 	Name          string //xxRequest, xxResponse, for example: RegisterRequest
 	Type          string //int, string, bool, object, array, any
 	FullName      string
-	PkgPath       string //for example: github.com/alovn/apidoc/examples/svc-user/handler
-	FullPath      string //for example: github.com/alovn/apidoc/examples/svc-user/handler.RegisterRequest
+	PkgPath       string //for example: github.com/alovn/apidocgen/examples/svc-user/handler
+	FullPath      string //for example: github.com/alovn/apidocgen/examples/svc-user/handler.RegisterRequest
 	Comment       string
 	ArraySchema   *TypeSchema
 	Properties    map[string]*TypeSchema //object

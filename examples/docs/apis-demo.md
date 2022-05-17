@@ -150,7 +150,7 @@ GET /user/demo/xml
 __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
---|--|--|--|--|--|--
+--|:-:|:-:|:-:|--|--|--
 __id__|_param_|int64|false|||DemoID
 
 _body_:

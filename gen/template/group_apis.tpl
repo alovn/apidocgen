@@ -40,7 +40,7 @@ version: _{{$v.Version}}_
 __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
---|--|--|--|--|--|--
+--|:-:|:-:|:-:|--|--|--
 {{- range $p:= $v.Requests.Parameters}}
 __{{$p.Name}}__|_{{$p.ParameterTypes}}_|{{$p.DataType}}|{{$p.Required}}|{{$p.Validate}}|{{$p.Example}}|{{$p.Description}}
 {{- end}}

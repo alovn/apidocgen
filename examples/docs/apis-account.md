@@ -20,7 +20,7 @@ POST /user/account/register
 __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
---|--|--|--|--|--|--
+--|:-:|:-:|:-:|--|--|--
 __from__|_query_|string|false|||test
 __password__|_form_|string|true|required||密码
 __username__|_form_|string|true|required||用户名
@@ -71,7 +71,7 @@ POST /user/account/login
 __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
---|--|--|--|--|--|--
+--|:-:|:-:|:-:|--|--|--
 __password__|_form_|string|true|required||登录密码
 __username__|_form_|string|true|required||登录用户名
 __validate_code__|_form_|string|false|||验证码

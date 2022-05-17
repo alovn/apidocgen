@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/alovn/apidoc/examples/common"
+	"github.com/alovn/apidocgen/examples/common"
 )
 
 type AddressHandler struct {

@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "debug",
             "cwd": "${workspaceRoot}",
-            "program": "${workspaceFolder}/cmd/apidoc/main.go",
+            "program": "${workspaceFolder}/main.go",
             "args": [
                 "--dir", "examples/svc-user,examples/common",
                 "--output", "examples/docs",

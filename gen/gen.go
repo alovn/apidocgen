@@ -11,7 +11,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/alovn/apidoc"
+	"github.com/alovn/apidocgen/parser"
 )
 
 type Gen struct {
@@ -30,7 +30,7 @@ type Config struct {
 	SearchDir       string
 	OutputDir       string
 	TemplateDir     string
-	Excludes        string
+	ExcludesDir     string
 	IsGenSingleFile bool
 }
 
@@ -78,12 +78,12 @@ func (g *Gen) Build() error {
 	if g.templateFS == nil && g.c.TemplateDir != "" {
 		g.templateFS = os.DirFS(g.c.TemplateDir)
 	}
-	var templateSingle string
+	var templateSingleIndex string
 	var templateGroupIndex string
 	var templateGroupApis string
 	var templateConfig TemplateConfig
 
-	if templateSingle, err = g.readTemplate("single.tpl"); err != nil {
+	if templateSingleIndex, err = g.readTemplate("single_index.tpl"); err != nil {
 		return err
 	}
 	if templateGroupIndex, err = g.readTemplate("group_index.tpl"); err != nil {
@@ -104,8 +104,8 @@ func (g *Gen) Build() error {
 		fmt.Println("use template:", templateConfig.Name)
 	}
 
-	p := apidoc.New()
-	apidoc.SetExcludedDirsAndFiles(g.c.Excludes)(p)
+	p := parser.New()
+	parser.SetExcludedDirsAndFiles(g.c.ExcludesDir)(p)
 	if err := p.Parse(searchDirs); err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (g *Gen) Build() error {
 	}
 
 	if len(doc.UngroupedApis) > 0 {
-		doc.Groups = append(doc.Groups, &apidoc.ApiGroupSpec{
+		doc.Groups = append(doc.Groups, &parser.ApiGroupSpec{
 			Group:       "ungrouped",
 			Title:       "ungrouped",
 			Description: "Ungrouped apis",
@@ -149,7 +149,7 @@ func (g *Gen) Build() error {
 			return a + b
 		},
 	}
-	sortApis := func(apis []*apidoc.ApiSpec) {
+	sortApis := func(apis []*parser.ApiSpec) {
 		less := func(i, j int) bool {
 			a, b := apis[i], apis[j]
 			return a.Order < b.Order
@@ -157,8 +157,8 @@ func (g *Gen) Build() error {
 		sort.Slice(apis, less)
 	}
 	if g.c.IsGenSingleFile {
-		t := template.New("apis-single").Funcs(funcMap)
-		t, err := t.Parse(templateSingle)
+		t := template.New("single-index").Funcs(funcMap)
+		t, err := t.Parse(templateSingleIndex)
 		if err != nil {
 			return err
 		}

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/alovn/apidoc/examples/common"
+	"github.com/alovn/apidocgen/examples/common"
 )
 
 type DemoHandler struct{}

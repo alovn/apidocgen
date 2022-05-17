@@ -1,4 +1,4 @@
-package apidoc
+package parser
 
 import (
 	"go/ast"

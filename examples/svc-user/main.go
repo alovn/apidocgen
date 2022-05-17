@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/alovn/apidoc/examples/svc-user/handler"
+	"github.com/alovn/apidocgen/examples/svc-user/handler"
 )
 
 //@title 用户服务

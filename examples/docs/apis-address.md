@@ -21,7 +21,7 @@ POST /user/address/create
 __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
---|--|--|--|--|--|--
+--|:-:|:-:|:-:|--|--|--
 __address__|_form_|string|true|required||地址
 __city_id__|_form_|int64|true|required||城市ID
 
@@ -57,7 +57,7 @@ POST /user/address/update
 __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
---|--|--|--|--|--|--
+--|:-:|:-:|:-:|--|--|--
 __address__|_form_|string|true|required||地址
 __id__|_form_|int64|true|required||地址ID
 
@@ -84,7 +84,7 @@ POST /user/address/delete
 __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
---|--|--|--|--|--|--
+--|:-:|:-:|:-:|--|--|--
 __id__|_form_|int64|true|required||地址ID
 
 __Response__:
@@ -110,7 +110,7 @@ GET /user/address/get/:id
 __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
---|--|--|--|--|--|--
+--|:-:|:-:|:-:|--|--|--
 __id__|_param_|int64|false|||地址ID
 
 __Response__:
