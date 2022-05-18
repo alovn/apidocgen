@@ -210,9 +210,6 @@ func (p *Parser) parseApiGroupInfo(comments []string) error {
 }
 
 func (p *Parser) parseApiDocInfo(comments []string) error {
-	if p.doc.Service != "" {
-		return errors.New("error: service has been set, multiple service?")
-	}
 	previousAttribute := ""
 	for line := 0; line < len(comments); line++ {
 		commentLine := comments[line]
