@@ -134,9 +134,9 @@ version|The version of service or api|@version 1.0.1
 accept|The request format, support json/xml|@accept json
 format|The response format, support json/xml|@format json
 request|The request body|@request LoginRequest
-response|The response body|@response LoginResponse
-success|As same as response|@success LoginResponse
-failure|As same as response|@failure LoginResponse
+response|The response body, [http code] [data type]|@response 200 LoginResponse
+success|As same as response|@success 200 LoginResponse
+failure|As same as response|@failure 200 LoginResponse
 param|The path parameter of router `/user/:id`, parameters separated by spaces [name] [type] [required] [comment],|@param id int true "user_id"
 query|The query parameter of route, `/user?id=`, parameters same as @param|@query id int true "user_id"
 header|The request HTTP header parameter, parameters same as @param|@header X-Request-ID string false "request id"
