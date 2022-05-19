@@ -325,8 +325,15 @@ func (v *TypeSchema) buildComment() string {
 	} else {
 		s += v.Type
 	}
-	if v.IsRequired() {
-		s += ", required"
+
+	validate := v.ValidateTag()
+	if validate != "" && !strings.Contains(validate, "required") {
+		if v.IsRequired() {
+			s += ", required"
+		}
+	}
+	if validate != "" {
+		s += fmt.Sprintf(", validate:\"%s\"", validate)
 	}
 	if len(v.Comment) > 0 {
 		s += ", " + v.Comment
@@ -553,7 +560,7 @@ func getTypeExample(typeName, example string) string {
 
 func exampleInt(example string) int {
 	if example == "" {
-		return 123
+		return 0
 	}
 	v, _ := strconv.Atoi(example)
 	return v
@@ -592,7 +599,7 @@ func exampleBool(example string) bool {
 
 func exampleString(example string) string {
 	if example == "" {
-		return "abc"
+		return "string"
 	}
 	return example
 }

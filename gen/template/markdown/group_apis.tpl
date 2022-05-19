@@ -44,6 +44,7 @@ parameter|parameterType|dataType|required|validate|example|description
 {{- range $p:= $v.Requests.Parameters}}
 __{{$p.Name}}__|_{{$p.ParameterTypes}}_|{{$p.DataType}}|{{$p.Required}}|{{$p.Validate}}|{{$p.Example}}|{{$p.Description}}
 {{- end}}
+{{- end}}
 {{- if $v.Requests.Body}}
 
 _body_:
@@ -52,7 +53,7 @@ _body_:
 {{$v.Requests.Body}}
 ```
 {{- end}}
-{{- end}}
+
 {{- if $v.Responses}}
 
 __Response__:

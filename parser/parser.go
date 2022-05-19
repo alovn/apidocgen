@@ -105,6 +105,22 @@ func (p *Parser) GetApiDoc() *ApiDocSpec {
 
 func (p *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 	//parse group
+	var fileGroup string
+	comments := strings.Split(astFile.Doc.Text(), "\n")
+	if len(comments) > 0 {
+		for _, comment := range comments {
+			commentLine := strings.TrimSpace(strings.TrimLeft(comment, "/"))
+			if len(commentLine) == 0 {
+				continue
+			}
+			attribute := strings.Fields(commentLine)[0]
+			lineRemainder, lowerAttribute := strings.TrimSpace(commentLine[len(attribute):]), strings.ToLower(attribute)
+			if lowerAttribute == groupAttr {
+				fileGroup = lineRemainder
+				break
+			}
+		}
+	}
 	for _, comment := range astFile.Comments {
 		comments := strings.Split(comment.Text(), "\n")
 		if isApiGroupComment(comments) {
@@ -141,7 +157,10 @@ func (p *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
 					}
 				}
-				operation.ApiSpec.doc = p.doc //ptr, for build full url
+				operation.ApiSpec.doc = p.doc                         //ptr, for build full url
+				if operation.ApiSpec.Group == "" && fileGroup != "" { //use file group
+					operation.ApiSpec.Group = fileGroup
+				}
 				if operation.ApiSpec.Group == "" {
 					p.doc.UngroupedApis = append(p.doc.UngroupedApis, &operation.ApiSpec)
 				} else {
