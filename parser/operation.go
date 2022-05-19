@@ -269,7 +269,7 @@ func (operation *Operation) parseCombinedObject(refType string, astFile *ast.Fil
 			// fmt.Println("keyVal", keyVal[0], keyVal[1]) //data TestData
 			// if is number or string wrap, replace it
 			if isReplaceValue(keyVal[1]) { //replace int,string, examples code or msg
-				if p, ok := schemaA.Properties[keyVal[0]]; ok {
+				if p, ok := schemaA.Properties[strings.ToLower(keyVal[0])]; ok {
 					p.example = keyVal[1] //replace response code, msg
 				}
 			} else {
