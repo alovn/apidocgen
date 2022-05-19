@@ -33,7 +33,7 @@ Flags:
 	--excludes:	Exclude directories and files when searching, comma separated
 	--output: 	Generate markdown files dir, default ./docs/
 	--template:	Template name or custom template directory, built-in includes markdown and apidocs, default markdown.
-	--single: 	If true, generate a single markdown file, default false`)
+	--single: 	Generate a single markdown file.`)
 		return
 	}
 	g := gen.New(&gen.Config{

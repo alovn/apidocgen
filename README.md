@@ -22,7 +22,7 @@ Flags:
     --excludes:  Exclude directories and files when searching, comma separated
     --output:    Generate markdown files dir, default ./docs/
     --template:  Template name or custom template directory, built-in includes markdown and apidocs, default markdown.
-    --single:    If true, generate a single markdown file, default false
+    --single:    Generate a single markdown file.
 ```
 
 built-in templates include `markdown` and `apidocs`, default is `markdown`.
@@ -45,7 +45,7 @@ apidocgen \
 
 The built-in includes `markdown` and `apidocs`.
 
-The built-in template `apidocs` is the template for generate website [apidocs](git@github.com:alovn/apidocs.git).
+The built-in template `apidocs` is the template for generate website [apidocs](https://github.com/alovn/apidocs).
 
 You can also use the custom template:
 
@@ -58,7 +58,7 @@ apidocgen \
 
 ## How to use
 
-apidocgen supported any web frameworks. here are an example using gin.
+apidocgen supported any web frameworks. here are an example using [bytego](https://github.com/gostack-labs/bytego).
 
 1. Add API annotations in main.go code:
 
@@ -69,7 +69,7 @@ apidocgen supported any web frameworks. here are an example using gin.
     //@desc the api about users
     //@baseurl /user
     func main() {
-        r := gin.Default()
+        r := bytego.New()
         c := controller.NewController()
         //@group account
         //@title Account
@@ -79,7 +79,7 @@ apidocgen supported any web frameworks. here are an example using gin.
             account.POST("/register", c.Register)
             account.POST("/login", c.Login)
         }
-        r.Run(":8000")
+        _ = r.Run(":8000")
     }
     ```
 
@@ -95,12 +95,12 @@ apidocgen supported any web frameworks. here are an example using gin.
     //@response 200 common.Response{code=0,msg="success",data=LoginResponse} "登录成功返回数据"
     //@response 200 common.Response{code=10020,msg="password_error"} "密码错误"
     //@author alovn
-    func (c *Controller) Login(ctx *gin.Context) {
+    func (c *Controller) Login(c *bytego.Ctx) {
         //bind LoginRequest
         res := common.NewResponse(0, "success", &LoginResponse{
             WelcomeMsg: "welcome",
         })
-        ctx.JSON(http.StatusOK, res)
+        c.JSON(http.StatusOK, res)
     }
     ```
 
