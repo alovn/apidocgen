@@ -1,6 +1,6 @@
 # apidocgen
 
-apidocgen is a tool for Go to generate markdown apis docs.
+apidocgen is a tool for Go to generate apis markdown docs.
 
 ## Install
 
@@ -25,7 +25,7 @@ Flags:
     --single:    If true, generate a single markdown file, default false
 ```
 
-built-in templates include `markdown`, `apidocs`, default is `markdown`.
+built-in templates include `markdown` and `apidocs`, default is `markdown`.
 
 run the command in the go module directory.
 
@@ -137,10 +137,10 @@ request|The request body|@request LoginRequest
 response|The response body|@response LoginResponse
 success|As same as response|@success LoginResponse
 failure|As same as response|@failure LoginResponse
-param|The path param of router `/user/:id`, parameters separated by spaces [name] [type] [required] [comment],|@param id int true "user_id"
-query|The query param of route, `/user?id=`, parameters same as @param|@query id int true "user_id"
-header|The request HTTP header, parameters same as @param|@header X-Request-ID string false "request id"
-form|The form param of request, parameters same as @param|@form id int true "user_id"
+param|The path parameter of router `/user/:id`, parameters separated by spaces [name] [type] [required] [comment],|@param id int true "user_id"
+query|The query parameter of route, `/user?id=`, parameters same as @param|@query id int true "user_id"
+header|The request HTTP header parameter, parameters same as @param|@header X-Request-ID string false "request id"
+form|The form parameter of request, parameters same as @param|@form id int true "user_id"
 deprecated|Mark api as deprecated.|@deprecated
 
 ## Response
