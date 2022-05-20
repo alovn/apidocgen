@@ -1,3 +1,4 @@
+//@group account
 package handler
 
 import (
@@ -27,7 +28,6 @@ type RegisterResponse struct {
 
 //@api POST /account/register
 //@title 用户注册接口
-//@group account
 //@request RegisterRequest
 //@header x-request-id string false "request id"
 //@query from string false "test"
@@ -58,7 +58,6 @@ type LoginResponse struct {
 
 //@title 用户登录接口
 //@api POST /account/login
-//@group account
 //@request LoginRequest
 //@response 200 common.Response{code=0,msg="success",data=LoginResponse} "登录成功返回数据"
 //@response 200 common.Response{code=10020,msg="password_error"} "密码错误"

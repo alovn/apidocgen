@@ -11,13 +11,13 @@ import (
 func main() {
 	var searchDir string
 	var outputDir string
-	var templateName string
+	var templateDir string
 	var excludesDir string
 	var isSingle bool
 	var isHelp bool
 	flag.StringVar(&searchDir, "dir", ".", "--dir")
 	flag.StringVar(&outputDir, "output", "./docs/", "--output")
-	flag.StringVar(&templateName, "template", "", "--template")
+	flag.StringVar(&templateDir, "template", "", "--template")
 	flag.StringVar(&excludesDir, "excludes", "", "--excludes")
 	flag.BoolVar(&isSingle, "single", false, "--single")
 	flag.BoolVar(&isHelp, "help", false, "--help")
@@ -39,7 +39,7 @@ Flags:
 	g := gen.New(&gen.Config{
 		SearchDir:       searchDir,
 		OutputDir:       outputDir,
-		TemplateName:    templateName,
+		TemplateDir:     templateDir,
 		ExcludesDir:     excludesDir,
 		IsGenSingleFile: isSingle,
 	})

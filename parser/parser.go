@@ -149,6 +149,11 @@ func (p *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 					}
 					continue
 				}
+
+				if !isApiComment(comments) {
+					continue
+				}
+
 				//parse apis
 				operation := NewOperation(p)
 				for _, comment := range comments {
@@ -283,6 +288,18 @@ func isApiGroupComment(comments []string) bool {
 		}
 	}
 	return isGroup
+}
+
+func isApiComment(comments []string) bool {
+	isApi := false
+	for _, commentLine := range comments {
+		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
+		switch attribute {
+		case apiAttr, successAttr, failureAttr, requestAttr, responseAttr:
+			return true
+		}
+	}
+	return isApi
 }
 
 func getPkgName(searchDir string) (string, error) {
@@ -497,7 +514,7 @@ func (p *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, parentSchema *
 		if err != nil {
 			return nil, err
 		}
-		return &TypeSchema{Type: "array", ArraySchema: itemSchema, Parent: parentSchema, Name: itemSchema.Name, TagValue: itemSchema.TagValue}, nil
+		return &TypeSchema{Type: "array", ArraySchema: itemSchema, Parent: parentSchema, Name: itemSchema.Name, FullName: itemSchema.FullName, TagValue: itemSchema.TagValue}, nil
 	// type Foo map[string]Bar
 	case *ast.MapType:
 		if keyIdent, ok := expr.Key.(*ast.Ident); ok {
@@ -514,7 +531,11 @@ func (p *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, parentSchema *
 				}
 				mapSchema.TagValue = schema.TagValue
 				mapSchema.Name = schema.Name
-				mapSchema.FullName = fmt.Sprintf("map[%s]%s", keyIdent.Name, expr.Value)
+				fullName := schema.FullName
+				if schema.Type == ARRAY {
+					fullName = fmt.Sprintf("[]%s", schema.FullName)
+				}
+				mapSchema.FullName = fmt.Sprintf("map[%s]%s", keyIdent.Name, fullName)
 
 				schema.Name = example
 				schema.TagValue = ""

@@ -1,3 +1,4 @@
+{{- define "group_index" -}}
 ---
 title: {{.Title}}
 weight: 1
@@ -18,4 +19,7 @@ version: _@{{.Version}}_
 {{add $k 1}}. [{{$v.Title}}](./apis-{{$v.Group}})
 {{range $k2,$api := $v.Apis}}
     {{add $k 1}}.{{add $k2 1}}. [{{$api.Title}}](./apis-{{$api.Group}}#{{add $k2 1}}-{{$api.Title}}) {{- if $api.Deprecated}}(Deprecated){{end}}
-{{end}}{{end}}
+{{- end }}
+{{- end }}
+{{ template "footer" }}
+{{ end }}

@@ -1,3 +1,4 @@
+{{- define "group_apis" -}}
 ---
 title: {{.Title}}
 navtitle: {{.Title}}
@@ -74,3 +75,5 @@ __Response__:
 ---
 {{- end}}
 {{- end}}
+{{ template "footer" }}
+{{ end }}

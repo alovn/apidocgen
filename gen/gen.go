@@ -20,12 +20,11 @@ type Gen struct {
 }
 
 type Config struct {
-	SearchDir         string
-	OutputDir         string
-	TemplateName      string
-	CustomTemplateDir string
-	ExcludesDir       string
-	IsGenSingleFile   bool
+	SearchDir       string
+	OutputDir       string
+	TemplateDir     string
+	ExcludesDir     string
+	IsGenSingleFile bool
 }
 
 type TemplateConfig struct {
@@ -35,12 +34,8 @@ type TemplateConfig struct {
 
 func New(c *Config) *Gen {
 	var defaultTemplateName = "markdown"
-	if c.TemplateName == "" {
-		c.TemplateName = defaultTemplateName
-	}
-	if strings.ContainsAny(c.TemplateName, "/\\") {
-		c.CustomTemplateDir = c.TemplateName
-		c.TemplateName = ""
+	if c.TemplateDir == "" {
+		c.TemplateDir = defaultTemplateName
 	}
 	return &Gen{
 		c: c,
@@ -72,19 +67,19 @@ func (g *Gen) Build() error {
 		}
 	}
 	var err error
-	if g.c.CustomTemplateDir != "" {
-		g.templateFS = os.DirFS(g.c.CustomTemplateDir)
-	} else {
-		if g.templateFS, err = fs.Sub(defaultTemplateFS, fmt.Sprintf("template/%s", g.c.TemplateName)); err != nil {
+	if strings.ContainsAny(g.c.TemplateDir, "/\\") { //custom dir
+		g.templateFS = os.DirFS(g.c.TemplateDir)
+		if g.templateFS, err = fs.Sub(defaultTemplateFS, g.c.TemplateDir); err != nil {
 			return err
 		}
+	} else {
+		g.c.TemplateDir = fmt.Sprintf("template/%s", g.c.TemplateDir)
+	}
+	if g.templateFS, err = fs.Sub(defaultTemplateFS, g.c.TemplateDir); err != nil {
+		return err
 	}
 
-	var templateSingleIndex string
-	var templateGroupIndex string
-	var templateGroupApis string
 	var templateConfig TemplateConfig
-
 	if s, err := g.readTemplate("config.json"); err != nil {
 		return err
 	} else {
@@ -95,19 +90,6 @@ func (g *Gen) Build() error {
 			templateConfig.Index = "README.md"
 		}
 		fmt.Println("use template:", templateConfig.Name)
-	}
-
-	if g.c.IsGenSingleFile {
-		if templateSingleIndex, err = g.readTemplate("single_index.tpl"); err != nil {
-			return err
-		}
-	} else {
-		if templateGroupIndex, err = g.readTemplate("group_index.tpl"); err != nil {
-			return err
-		}
-		if templateGroupApis, err = g.readTemplate("group_apis.tpl"); err != nil {
-			return err
-		}
 	}
 
 	p := parser.New()
@@ -162,12 +144,12 @@ func (g *Gen) Build() error {
 		}
 		sort.Slice(apis, less)
 	}
+
+	t, err := template.New("apidocgen").Funcs(funcMap).ParseFS(g.templateFS, "*.tpl")
+	if err != nil {
+		return err
+	}
 	if g.c.IsGenSingleFile {
-		t := template.New("single-index").Funcs(funcMap)
-		t, err := t.Parse(templateSingleIndex)
-		if err != nil {
-			return err
-		}
 		f, err := os.Create(filepath.Join(g.c.OutputDir, templateConfig.Index))
 		if err != nil {
 			return err
@@ -177,18 +159,12 @@ func (g *Gen) Build() error {
 			apis := g.Apis
 			sortApis(apis)
 		}
-
-		if err = t.Execute(f, doc); err != nil {
+		if err = t.ExecuteTemplate(f, "single_index", doc); err != nil {
 			return err
 		}
 		fmt.Println("generated: ", templateConfig.Index)
 	} else {
 		//group
-		t := template.New("group-apis").Funcs(funcMap)
-		t, err := t.Parse(templateGroupApis)
-		if err != nil {
-			return err
-		}
 		for _, v := range doc.Groups {
 			group := v
 			sortApis(group.Apis)
@@ -198,24 +174,18 @@ func (g *Gen) Build() error {
 				return err
 			}
 			defer f.Close()
-			if err = t.Execute(f, group); err != nil {
+			if err = t.ExecuteTemplate(f, "group_apis", group); err != nil {
 				return err
 			}
 			fmt.Println("Generated:", fileName)
 		}
-
 		//readme
-		t = template.New("group-readme").Funcs(funcMap)
-		t, err = t.Parse(templateGroupIndex)
-		if err != nil {
-			return err
-		}
 		f, err := os.Create(filepath.Join(g.c.OutputDir, templateConfig.Index))
 		if err != nil {
 			return err
 		}
 		defer f.Close()
-		if err = t.Execute(f, doc); err != nil {
+		if err = t.ExecuteTemplate(f, "group_index", doc); err != nil {
 			return err
 		}
 		fmt.Println("generated:", templateConfig.Index)

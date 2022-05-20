@@ -1,4 +1,11 @@
-# {{.Title}} {{if .Service}} ({{.Service}}){{end}}
+{{- define "single_index" -}}
+---
+title: {{.Title}}
+navtitle: {{.Title}}
+weight: 3
+---
+
+## {{.Title}} {{if .Service}} ({{.Service}}){{end}}
 
 {{- if .Version}}
 
@@ -9,11 +16,15 @@ version: _@{{.Version}}_
 
 {{.Description}}
 {{- end}}
-{{range $k,$v := .Groups}}
+{{- range $k,$v := .Groups}}
+
 {{add $k 1}}. [{{$v.Title}}](#{{add $k 1}}-{{$v.Title}})
-{{range $k2,$api := $v.Apis}}
+{{- range $k2,$api := $v.Apis}}
+
     {{add $k 1}}.{{add $k2 1}}. [{{$api.Title}}](#{{add $k 1}}{{add $k2 1}}-{{$api.Title}}) {{- if $api.Deprecated}}(Deprecated){{end}}
-{{end}}{{end}}
+{{- end}}
+{{- end}}
+
 ## apis
 {{- range $k,$v := .Groups}}
 
@@ -50,7 +61,7 @@ version: _{{$v.Version}}_
 __Request__:
 
 parameter|parameterType|dataType|required|validate|example|description
---|--|--|--|--|--|--
+--|:-:|:-:|:-:|--|--|--
 {{- range $p:= $v.Requests.Parameters}}
 __{{$p.Name}}__|_{{$p.ParameterTypes}}_|{{$p.DataType}}|{{$p.Required}}|{{$p.Validate}}|{{$p.Example}}|{{$p.Description}}
 {{- end}}
@@ -59,7 +70,7 @@ __{{$p.Name}}__|_{{$p.ParameterTypes}}_|{{$p.DataType}}|{{$p.Required}}|{{$p.Val
 
 _body_:
 
-```{if eq $v.Accept "json"}}javascript{{else}}{{$v.Accept}}{{end}}
+```{{if eq $v.Accept "json"}}javascript{{else}}{{$v.Accept}}{{end}}
 {{$v.Requests.Body}}
 ```
 {{- end}}
@@ -68,7 +79,7 @@ _body_:
 __Response__:
 {{- range $res := $v.Responses}}
 
-```{if eq $v.Format "json"}}javascript{{else}}{{$v.Format}}{{end}}
+```{{if eq $v.Format "json"}}javascript{{else}}{{$v.Format}}{{end}}
 //StatusCode: {{$res.StatusCode}} {{$res.Description}}
 {{$res.Body}}
 ```
@@ -78,3 +89,5 @@ __Response__:
 {{- end}}
 {{- end}}
 {{- end}}
+{{ template "footer" }}
+{{ end }}
