@@ -22,6 +22,7 @@ type Gen struct {
 type Config struct {
 	SearchDir       string
 	OutputDir       string
+	OutputIndexName string
 	TemplateDir     string
 	ExcludesDir     string
 	IsGenSingleFile bool
@@ -58,36 +59,36 @@ func (g *Gen) readTemplate(name string) (s string, err error) {
 
 func (g *Gen) Build() error {
 	if g.c == nil {
-		return errors.New("error config")
+		return errors.New("error: config nil")
 	}
+
 	searchDirs := strings.Split(g.c.SearchDir, ",")
 	for _, searchDir := range searchDirs {
 		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
-			return fmt.Errorf("dir: %s does not exist", searchDir)
+			return fmt.Errorf("error: dir %s does not exist", searchDir)
 		}
 	}
+
 	var err error
 	if strings.ContainsAny(g.c.TemplateDir, "/\\") { //custom dir
 		g.templateFS = os.DirFS(g.c.TemplateDir)
+	} else {
+		g.c.TemplateDir = fmt.Sprintf("template/%s", g.c.TemplateDir)
 		if g.templateFS, err = fs.Sub(defaultTemplateFS, g.c.TemplateDir); err != nil {
 			return err
 		}
-	} else {
-		g.c.TemplateDir = fmt.Sprintf("template/%s", g.c.TemplateDir)
-	}
-	if g.templateFS, err = fs.Sub(defaultTemplateFS, g.c.TemplateDir); err != nil {
-		return err
 	}
 
-	var templateConfig TemplateConfig
-	if s, err := g.readTemplate("config.json"); err != nil {
-		return err
-	} else {
+	if s, err := g.readTemplate("config.json"); err == nil {
+		var templateConfig TemplateConfig
 		if err = json.Unmarshal([]byte(s), &templateConfig); err != nil {
 			return err
 		}
 		if templateConfig.Index == "" {
 			templateConfig.Index = "README.md"
+		}
+		if g.c.OutputIndexName == "" {
+			g.c.OutputIndexName = templateConfig.Index
 		}
 		fmt.Println("use template:", templateConfig.Name)
 	}
@@ -111,6 +112,11 @@ func (g *Gen) Build() error {
 		return nil
 	}
 
+	g.c.OutputIndexName = strings.ReplaceAll(g.c.OutputIndexName, "@{service}", doc.Service)
+	if strings.ContainsAny(g.c.OutputIndexName, "/\\") { //custom dir
+		return fmt.Errorf("error: output-index can't be a directory: %s.", g.c.OutputIndexName)
+	}
+
 	if len(doc.UngroupedApis) > 0 {
 		doc.Groups = append(doc.Groups, &parser.ApiGroupSpec{
 			Group:       "ungrouped",
@@ -120,6 +126,7 @@ func (g *Gen) Build() error {
 		})
 		doc.UngroupedApis = doc.UngroupedApis[:0]
 	}
+
 	sort.Slice(doc.Groups, func(i, j int) bool {
 		a, b := doc.Groups[i], doc.Groups[j]
 		if a.Order == b.Order {
@@ -150,7 +157,7 @@ func (g *Gen) Build() error {
 		return err
 	}
 	if g.c.IsGenSingleFile {
-		f, err := os.Create(filepath.Join(g.c.OutputDir, templateConfig.Index))
+		f, err := os.Create(filepath.Join(g.c.OutputDir, g.c.OutputIndexName))
 		if err != nil {
 			return err
 		}
@@ -162,7 +169,7 @@ func (g *Gen) Build() error {
 		if err = t.ExecuteTemplate(f, "single_index", doc); err != nil {
 			return err
 		}
-		fmt.Println("generated: ", templateConfig.Index)
+		fmt.Println("generated: ", g.c.OutputIndexName)
 	} else {
 		//group
 		for _, v := range doc.Groups {
@@ -180,7 +187,7 @@ func (g *Gen) Build() error {
 			fmt.Println("Generated:", fileName)
 		}
 		//readme
-		f, err := os.Create(filepath.Join(g.c.OutputDir, templateConfig.Index))
+		f, err := os.Create(filepath.Join(g.c.OutputDir, g.c.OutputIndexName))
 		if err != nil {
 			return err
 		}
@@ -188,7 +195,7 @@ func (g *Gen) Build() error {
 		if err = t.ExecuteTemplate(f, "group_index", doc); err != nil {
 			return err
 		}
-		fmt.Println("generated:", templateConfig.Index)
+		fmt.Println("generated:", g.c.OutputIndexName)
 	}
 	fmt.Println("apis total count:", doc.TotalCount)
 	return nil

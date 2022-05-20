@@ -15,14 +15,15 @@ $ apidocgen --help
 apidocgen is a tool for Go to generate apis markdown docs.
 
 Usage:
-  apidocgen --dir= --excludes= --output= --template= --single
+  apidocgen --dir= --excludes= --output= --output-index= --template= --single
 
 Flags:
-    --dir:       Search apis dir, comma separated, default .
-    --excludes:  Exclude directories and files when searching, comma separated
-    --output:    Generate markdown files dir, default ./docs/
-    --template:  Template name or custom template directory, built-in includes markdown and apidocs, default markdown.
-    --single:    Generate a single markdown file.
+        --dir:          Search apis dir, comma separated, default .
+        --excludes:     Exclude directories and files when searching, comma separated
+        --output:       Generate markdown files dir, default ./docs/
+        --output-index: Generate index file name.
+        --template:     Template name or custom template directory, built-in includes markdown and apidocs, default markdown.
+        --single:       Generate a single markdown file.
 ```
 
 built-in templates include `markdown` and `apidocs`, default is `markdown`.
@@ -39,6 +40,9 @@ apidocgen \
     --dir=svc-user,common \
     --template=apidocs \
     --output=./docs
+
+apidocgen --output-index=index.md //generate index.md
+apidocgen --output-index=@{service}.md //generate index file name by your @service comment, example: svc-user.md.
 ```
 
 ## Template
