@@ -157,8 +157,8 @@ __id__|_param_|int64|false|||DemoID
 _body_:
 
 ```xml
-<request> //object(handler.DemoXMLRequest), XML测试请求对象
-  <id>0</id> //int64, DemoID
+<request>  //object(handler.DemoXMLRequest), XML测试请求对象
+  <id>0</id>  //int64, DemoID
 </request>
 ```
 
@@ -166,35 +166,35 @@ __Response__:
 
 ```xml
 //StatusCode: 200 
-<response> //object(common.Response), 通用返回结果
-  <code>0</code> //int, 返回状态码
-  <demo> //object(handler.DemoXMLResponse), XML测试返回对象
-    <address>string</address> //string, 地址信息
-    <city_id>0</city_id> //int64, 城市ID
-    <id>0</id> //int64, 地址ID
+<response>  //object(common.Response), 通用返回结果
+  <code>0</code>  //int, 返回状态码
+  <demo>  //object(handler.DemoXMLResponse), XML测试返回对象
+    <address>string</address>  //string, 地址信息
+    <city_id>0</city_id>  //int64, 城市ID
+    <id>0</id>  //int64, 地址ID
   </demo>
-  <msg>success</msg> //string, 返回消息
+  <msg>success</msg>  //string, 返回消息
 </response>
 ```
 
 ```xml
 //StatusCode: 200 
-<response> //object(common.Response), 通用返回结果
-  <code>0</code> //int, 返回状态码
-  <data> //object(handler.DemoXMLResponse2), XML测试返回对象2
-    <address>string</address> //string, 地址信息
-    <city_id>0</city_id> //int64, 城市ID
-    <id>0</id> //int64, 地址ID
+<response>  //object(common.Response), 通用返回结果
+  <code>0</code>  //int, 返回状态码
+  <data>  //object(handler.DemoXMLResponse2), XML测试返回对象2
+    <address>string</address>  //string, 地址信息
+    <city_id>0</city_id>  //int64, 城市ID
+    <id>0</id>  //int64, 地址ID
   </data>
-  <msg>success</msg> //string, 返回消息
+  <msg>success</msg>  //string, 返回消息
 </response>
 ```
 
 ```xml
 //StatusCode: 200 
-<response> //object(common.Response), 通用返回结果
-  <code>10010</code> //int, 返回状态码
-  <msg>sme error</msg> //string, 返回消息
+<response>  //object(common.Response), 通用返回结果
+  <code>10010</code>  //int, 返回状态码
+  <msg>sme error</msg>  //string, 返回消息
 </response>
 ```
 

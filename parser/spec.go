@@ -84,7 +84,9 @@ type ApiResponseSpec struct {
 	Format      string //json xml
 	Schema      *TypeSchema
 	Description string
+	IsMock      bool
 	body        string //cache
+	pureBody    string //cache
 }
 
 type TypeSchema struct {
@@ -111,7 +113,7 @@ func (s *ApiRequestSpec) Body() string {
 	if s.body != "" {
 		return s.body
 	}
-	s.body = s.Schema.Write(s.Accept)
+	s.body = s.Schema.Write(s.Accept, true)
 	return s.body
 }
 
@@ -122,27 +124,100 @@ func (s *ApiResponseSpec) Body() string {
 	if s.body != "" {
 		return s.body
 	}
-	s.body = s.Schema.Write(s.Format)
+	s.body = s.Schema.Write(s.Format, true)
 	return s.body
 }
 
-func (s *TypeSchema) Write(format string) string {
+func (s *ApiResponseSpec) PureBody() string {
+	if s.Schema == nil {
+		return ""
+	}
+	if s.pureBody != "" {
+		return s.pureBody
+	}
+	s.pureBody = s.Schema.Write(s.Format, false)
+	return s.pureBody
+}
+
+func (s *TypeSchema) Write(format string, withComment bool) (body string) {
 	switch format {
 	case "json":
-		return s.JSON()
+		return s.JSON(withComment)
 	case "xml":
-		return s.XML()
+		return s.XML(withComment)
 	default:
-		return s.JSON()
+		return s.JSON(withComment)
 	}
 }
 
-func (s *TypeSchema) JSON() string {
+func (s *TypeSchema) JSON(withComment bool) string {
 	depth := 0
 	var sb strings.Builder
 	// sb.WriteString(fmt.Sprintf("// %s %s %s\n", s.Type, s.Name, s.Comment))
-	s.parseJSON(depth, &sb, true)
+	s.parseJSON(depth, &sb, false, withComment)
 	return sb.String()
+}
+
+func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine, withComment bool) {
+	prefix := ""
+	for i := depth; i > 0; i-- {
+		prefix += "  "
+	}
+	if s.Type == OBJECT && s.Properties != nil && len(s.Properties) > 0 {
+		if isNewLine {
+			sb.WriteString(prefix)
+		}
+		sb.WriteString("{" + s.buildComment(withComment) + "\n")
+		prefix2 := prefix + "  "
+		//sort keys
+		var keys []string
+		for k, v := range s.Properties {
+			if v.isIgnoreJsonKey() {
+				continue
+			}
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		var i int = 0
+		// build json
+		for _, k := range keys {
+			v := s.Properties[k]
+			key, _ := v.JSONKey()
+			sb.WriteString(fmt.Sprintf(prefix2+"\"%s\": ", key)) //write key
+			v.parseJSON(depth+1, sb, false, withComment)
+			haxNext := i < len(keys)-1
+			if haxNext {
+				sb.WriteString(",")
+			}
+			//comment
+			if len(v.Properties) == 0 && v.ArraySchema == nil {
+				sb.WriteString(v.buildComment(withComment))
+			}
+			sb.WriteString("\n")
+			i++
+		}
+		sb.WriteString(prefix + "}")
+	} else if s.Type == ARRAY && s.ArraySchema != nil {
+		if isNewLine {
+			sb.WriteString(prefix)
+		}
+		sb.WriteString(fmt.Sprintf("[%s\n", s.buildComment(withComment)))
+		if s.ArraySchema.ExampleValue() != NULL {
+			s.ArraySchema.parseJSON(depth+1, sb, true, withComment)
+		}
+		sb.WriteString("\n")
+		sb.WriteString(prefix + "]")
+	} else { // write example value
+		if withComment {
+			if depth == 0 {
+				sb.WriteString(fmt.Sprintf("%s\n", strings.TrimLeft(s.buildComment(withComment), " ")))
+			}
+		}
+		if isNewLine {
+			sb.WriteString(prefix)
+		}
+		sb.WriteString(s.ExampleValue())
+	}
 }
 
 func (s *TypeSchema) isIgnoreJsonKey() (isIgnore bool) {
@@ -162,77 +237,16 @@ func (s *TypeSchema) isIgnoreJsonKey() (isIgnore bool) {
 	return false
 }
 
-func (s *TypeSchema) parseJSON(depth int, sb *strings.Builder, isNewLine bool) {
-	prefix := ""
-	for i := depth; i > 0; i-- {
-		prefix += "  "
-	}
-
-	if s.Type == OBJECT && s.Properties != nil && len(s.Properties) > 0 {
-		if isNewLine {
-			sb.WriteString(prefix)
-		}
-		sb.WriteString("{  //" + s.buildComment() + "\n")
-		prefix2 := prefix + "  "
-		//sort keys
-		var keys []string
-		for k, v := range s.Properties {
-			if v.isIgnoreJsonKey() {
-				continue
-			}
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		var i int = 0
-		// build json
-		for _, k := range keys {
-			v := s.Properties[k]
-			key, _ := v.JSONKey()
-			sb.WriteString(fmt.Sprintf(prefix2+"\"%s\": ", key)) //write key
-			v.parseJSON(depth+1, sb, false)
-			haxNext := i < len(keys)-1
-			if haxNext {
-				sb.WriteString(",")
-			}
-			//comment
-			if len(v.Properties) == 0 && v.ArraySchema == nil {
-				sb.WriteString(fmt.Sprintf("  //%s", v.buildComment()))
-			}
-			sb.WriteString("\n")
-			i++
-		}
-		sb.WriteString(prefix + "}")
-
-	} else if s.Type == ARRAY && s.ArraySchema != nil {
-		if isNewLine {
-			sb.WriteString(prefix)
-		}
-		sb.WriteString(fmt.Sprintf("[  //%s\n", s.buildComment()))
-		if s.ArraySchema.ExampleValue() != NULL {
-			s.ArraySchema.parseJSON(depth+1, sb, true)
-		}
-		sb.WriteString("\n")
-		sb.WriteString(prefix + "]")
-	} else { // write example value
-		if depth == 0 {
-			sb.WriteString(fmt.Sprintf("//%s\n", s.buildComment()))
-		}
-		if isNewLine {
-			sb.WriteString(prefix)
-		}
-		sb.WriteString(s.ExampleValue())
-	}
-}
-
-func (s *TypeSchema) XML() string {
+func (s *TypeSchema) XML(withComment bool) string {
 	depth := 0
 	var sb strings.Builder
+	// sb.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
 	// sb.WriteString(fmt.Sprintf("// %s %s %s\n", s.Type, s.Name, s.Comment))
-	s.parseXML(depth, &sb, false)
+	s.parseXML(depth, &sb, false, withComment)
 	return sb.String()
 }
 
-func (s *TypeSchema) parseXML(depth int, sb *strings.Builder, isNewLine bool) {
+func (s *TypeSchema) parseXML(depth int, sb *strings.Builder, isNewLine, withComment bool) {
 	prefix := ""
 	for i := depth; i > 0; i-- {
 		prefix += "  "
@@ -248,7 +262,7 @@ func (s *TypeSchema) parseXML(depth int, sb *strings.Builder, isNewLine bool) {
 		for k, v := range attrs { //write attrs
 			sb.WriteString(fmt.Sprintf(" %s=\"%s\"", k, v))
 		}
-		sb.WriteString("> //" + s.buildComment())
+		sb.WriteString(">" + s.buildComment(withComment))
 		prefix2 := prefix + "  "
 		//sort keys
 		var keys []string
@@ -271,7 +285,7 @@ func (s *TypeSchema) parseXML(depth int, sb *strings.Builder, isNewLine bool) {
 			}
 			if isInner { //innerxml
 				sb.WriteString(prefix2 + strings.Trim(v.ExampleValue(), "\""))
-				sb.WriteString("//innerxml " + v.buildComment() + "\n")
+				sb.WriteString(v.buildComment(withComment, "innerxml") + "\n")
 				continue
 			}
 			if len(v.Properties) == 0 && v.Type != ARRAY {
@@ -280,19 +294,19 @@ func (s *TypeSchema) parseXML(depth int, sb *strings.Builder, isNewLine bool) {
 					//write xml node one line
 					sb.WriteString(fmt.Sprintf("\n"+prefix2+"<%s>", key)) //write key
 					sb.WriteString(strings.Trim(example, "\""))
-					sb.WriteString(fmt.Sprintf("</%s> //%s", key, v.buildComment())) //write key
+					sb.WriteString(fmt.Sprintf("</%s>%s", key, v.buildComment(withComment))) //write key
 				}
 			} else {
-				v.parseXML(depth+1, sb, true)
+				v.parseXML(depth+1, sb, true, withComment)
 			}
 		}
 		sb.WriteString("\n" + prefix + fmt.Sprintf("</%s>", xmlName))
 	} else if s.Type == ARRAY && s.ArraySchema != nil {
 		if s.ArraySchema.Type == OBJECT {
-			s.ArraySchema.parseXML(depth, sb, true)
+			s.ArraySchema.parseXML(depth, sb, true, withComment)
 		} else {
-			sb.WriteString(fmt.Sprintf("\n%s<%s> //%s\n", prefix, s.Name, s.buildComment())) //write key
-			s.ArraySchema.parseXML(depth+1, sb, false)
+			sb.WriteString(fmt.Sprintf("\n%s<%s>%s\n", prefix, s.Name, s.buildComment(withComment))) //write key
+			s.ArraySchema.parseXML(depth+1, sb, false, withComment)
 			sb.WriteString(fmt.Sprintf("\n%s</%s>", prefix, s.Name)) //write key
 		}
 	} else { // write example value
@@ -306,11 +320,19 @@ func (s *TypeSchema) parseXML(depth int, sb *strings.Builder, isNewLine bool) {
 	}
 }
 
-func (v *TypeSchema) buildComment() string {
+func (v *TypeSchema) buildComment(withComment bool, withPrefix ...string) string {
 	if v == nil {
 		return ""
 	}
-	s := ""
+	if !withComment {
+		return ""
+	}
+	s := "  //"
+	if len(withPrefix) > 0 {
+		for _, x := range withPrefix {
+			s += x + ", "
+		}
+	}
 	if v.Type == ARRAY {
 		arrayName := v.ArraySchema.Type //int
 		if v.ArraySchema.Type == OBJECT {

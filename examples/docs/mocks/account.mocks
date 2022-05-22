@@ -1,0 +1,38 @@
+[
+ {
+  "title": "用户注册接口",
+  "http_method": "POST",
+  "path": "/user/account/register",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "http_code": 200,
+    "body": "{\n  \"code\": 0,\n  \"data\": {\n    \"user_id\": 0,\n    \"username\": \"string\",\n    \"welcome_msg\": \"string\"\n  },\n  \"msg\": \"success\"\n}"
+   },
+   {
+    "http_code": 200,
+    "body": "{\n  \"code\": 10011,\n  \"msg\": \"password format error\"\n}"
+   }
+  ]
+ },
+ {
+  "title": "用户登录接口",
+  "http_method": "POST",
+  "path": "/user/account/login",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "http_code": 200,
+    "body": "{\n  \"code\": 0,\n  \"data\": {\n    \"welcome_msg\": \"string\"\n  },\n  \"msg\": \"success\"\n}"
+   },
+   {
+    "http_code": 200,
+    "body": "{\n  \"code\": 10020,\n  \"msg\": \"password_error\"\n}"
+   }
+  ]
+ }
+]

@@ -1,0 +1,17 @@
+[
+ {
+  "title": "获取菜单节点",
+  "http_method": "GET",
+  "path": "/user/menu/nodes",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "is_mock": true,
+    "http_code": 200,
+    "body": "{\n  \"code\": 0,\n  \"data\": [\n    {\n      \"id\": 0,\n      \"name\": \"string\",\n      \"nodes\": [\n\n      ]\n    }\n  ],\n  \"msg\": \"success\"\n}"
+   }
+  ]
+ }
+]

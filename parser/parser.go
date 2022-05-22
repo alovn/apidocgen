@@ -48,6 +48,7 @@ var allMethod = map[string]struct{}{
 	http.MethodOptions: {},
 	http.MethodHead:    {},
 	http.MethodPatch:   {},
+	"ANY":              {},
 }
 
 type Parser struct {
@@ -436,7 +437,7 @@ func (p *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, parentSchema *TypeSch
 		}, nil
 	}
 
-	fmt.Printf("Generating %s\n", typeName)
+	// fmt.Printf("Generating %s\n", typeName)
 
 	switch expr := typeSpecDef.TypeSpec.Type.(type) {
 	// type Foo struct {...}

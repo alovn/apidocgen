@@ -1,0 +1,114 @@
+[
+ {
+  "title": "struct数组",
+  "http_method": "GET",
+  "path": "/user/demo/struct_array",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "is_mock": true,
+    "http_code": 200,
+    "body": "[\n  {\n    \"count\": 0,\n    \"description\": \"string\",\n    \"float_array\": [\n      1.23\n    ],\n    \"int_array\": [\n      0\n    ],\n    \"int_pointer\": 0,\n    \"map\": {\n      \"string\": 0\n    },\n    \"object_1\": {\n      \"name\": \"string\"\n    },\n    \"object_2\": {\n      \"name\": \"string\"\n    },\n    \"title\": \"string\"\n  }\n]"
+   }
+  ]
+ },
+ {
+  "title": "struct嵌套",
+  "http_method": "GET",
+  "path": "/user/demo/struct_nested",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "is_mock": true,
+    "http_code": 200,
+    "body": "{\n  \"Name\": \"string\",\n  \"Name2\": \"string\"\n}"
+   }
+  ]
+ },
+ {
+  "title": "int数组",
+  "http_method": "GET",
+  "path": "/user/demo/int_array",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "is_mock": true,
+    "http_code": 200,
+    "body": "[\n  0\n]"
+   }
+  ]
+ },
+ {
+  "title": "int",
+  "http_method": "GET",
+  "path": "/user/demo/int",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "is_mock": true,
+    "http_code": 200,
+    "body": "0"
+   }
+  ]
+ },
+ {
+  "title": "map",
+  "http_method": "GET",
+  "path": "/user/demo/map",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "is_mock": true,
+    "http_code": 200,
+    "body": "{\n  \"string\": {\n    \"count\": 0,\n    \"description\": \"string\",\n    \"float_array\": [\n      1.23\n    ],\n    \"int_array\": [\n      0\n    ],\n    \"int_pointer\": 0,\n    \"map\": {\n      \"string\": 0\n    },\n    \"object_1\": {\n      \"name\": \"string\"\n    },\n    \"object_2\": {\n      \"name\": \"string\"\n    },\n    \"title\": \"string\"\n  }\n}"
+   }
+  ]
+ },
+ {
+  "title": "xml",
+  "http_method": "GET",
+  "path": "/user/demo/xml",
+  "headers": {
+   "Content-Type": "application/xml"
+  },
+  "response": [
+   {
+    "http_code": 200,
+    "body": "\u003cresponse\u003e\n  \u003ccode\u003e0\u003c/code\u003e\n  \u003cdemo\u003e\n    \u003caddress\u003estring\u003c/address\u003e\n    \u003ccity_id\u003e0\u003c/city_id\u003e\n    \u003cid\u003e0\u003c/id\u003e\n  \u003c/demo\u003e\n  \u003cmsg\u003esuccess\u003c/msg\u003e\n\u003c/response\u003e"
+   },
+   {
+    "http_code": 200,
+    "body": "\u003cresponse\u003e\n  \u003ccode\u003e0\u003c/code\u003e\n  \u003cdata\u003e\n    \u003caddress\u003estring\u003c/address\u003e\n    \u003ccity_id\u003e0\u003c/city_id\u003e\n    \u003cid\u003e0\u003c/id\u003e\n  \u003c/data\u003e\n  \u003cmsg\u003esuccess\u003c/msg\u003e\n\u003c/response\u003e"
+   },
+   {
+    "http_code": 200,
+    "body": "\u003cresponse\u003e\n  \u003ccode\u003e10010\u003c/code\u003e\n  \u003cmsg\u003esme error\u003c/msg\u003e\n\u003c/response\u003e"
+   }
+  ]
+ },
+ {
+  "title": "time",
+  "http_method": "GET",
+  "path": "/user/demo/time",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "is_mock": true,
+    "http_code": 200,
+    "body": "{\n  \"code\": 0,\n  \"data\": {\n    \"time_1\": \"2022-05-16T16:47:48.741899+08:00\",\n    \"time_2\": \"2022-05-14 15:04:05\",\n    \"time_3\": \"2022-05-16T16:47:48.741899+08:00\"\n  },\n  \"msg\": \"success\"\n}"
+   }
+  ]
+ }
+]

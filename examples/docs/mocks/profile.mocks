@@ -1,0 +1,17 @@
+[
+ {
+  "title": "获取用户资料",
+  "http_method": "GET",
+  "path": "/user/profile/get",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "is_mock": true,
+    "http_code": 200,
+    "body": "{\n  \"code\": 0,\n  \"data\": {\n    \"extends\": {\n      \"string\": \"string\"\n    },\n    \"gender\": 1,\n    \"username\": \"string\"\n  },\n  \"msg\": \"success\"\n}"
+   }
+  ]
+ }
+]

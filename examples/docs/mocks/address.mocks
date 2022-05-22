@@ -1,0 +1,77 @@
+[
+ {
+  "title": "添加地址接口",
+  "http_method": "POST",
+  "path": "/user/address/create",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "is_mock": true,
+    "http_code": 200,
+    "body": "{\n  \"code\": 0,\n  \"msg\": \"success\"\n}"
+   }
+  ]
+ },
+ {
+  "title": "更新地址接口",
+  "http_method": "POST",
+  "path": "/user/address/update",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "is_mock": true,
+    "http_code": 200,
+    "body": "{\n  \"code\": 0,\n  \"msg\": \"success\"\n}"
+   }
+  ]
+ },
+ {
+  "title": "删除地址接口",
+  "http_method": "POST",
+  "path": "/user/address/delete",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "is_mock": true,
+    "http_code": 200,
+    "body": "{\n  \"code\": 0,\n  \"msg\": \"success\"\n}"
+   }
+  ]
+ },
+ {
+  "title": "获取地址信息",
+  "http_method": "GET",
+  "path": "/user/address/get/:id",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "is_mock": true,
+    "http_code": 200,
+    "body": "{\n  \"code\": 0,\n  \"data\": {\n    \"address\": \"string\",\n    \"city_id\": 0,\n    \"id\": 0\n  },\n  \"msg\": \"success\"\n}"
+   }
+  ]
+ },
+ {
+  "title": "获取地址列表",
+  "http_method": "GET",
+  "path": "/user/address/list",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "response": [
+   {
+    "is_mock": true,
+    "http_code": 200,
+    "body": "{\n  \"code\": 0,\n  \"data\": [\n    {\n      \"address\": \"string\",\n      \"city_id\": 0,\n      \"id\": 0\n    }\n  ],\n  \"msg\": \"success\"\n}"
+   }
+  ]
+ }
+]

@@ -195,6 +195,12 @@ func (operation *Operation) ParseParametersComment(parameterType, commentLine st
 
 // ParseResponseComment parses comment for given `response` comment string.
 func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File) error {
+	commentLine = strings.TrimSpace(commentLine)
+	mockTag := "//mock"
+	isMock := strings.HasSuffix(commentLine, mockTag)
+	if isMock {
+		commentLine = strings.TrimSuffix(commentLine, mockTag)
+	}
 	matches := responsePattern.FindStringSubmatch(commentLine)
 	if len(matches) != 4 && len(matches) != 3 {
 		return nil
@@ -223,6 +229,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		Format:      operation.Format,
 		Schema:      schema,
 		Description: description,
+		IsMock:      isMock,
 	})
 	return nil
 }

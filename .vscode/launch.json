@@ -5,17 +5,31 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch file",
+            "name": "Generate Docs and Mocks",
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "cwd": "${workspaceRoot}",
+            "cwd": "${workspaceRoot}/examples",
             "program": "${workspaceFolder}/main.go",
             "args": [
-                "--dir", "examples/svc-user,examples/common",
-                "--output", "examples/docs",
+                "--dir", "svc-user,common",
+                "--output", "docs",
                 "--template", "markdown",
+                "--gen-mocks"
             ]
-        }
+        },
+        {
+            "name": "Mock Server",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "cwd": "${workspaceRoot}/examples",
+            "program": "${workspaceFolder}/main.go",
+            "args": [
+                "mock",
+                "--dir", "./docs/mocks",
+                "--listen", "localhost:8001"
+            ]
+        },
     ]
 }
