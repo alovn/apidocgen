@@ -153,13 +153,13 @@ deprecated|Mark api as deprecated.|@deprecated
         Name string `json:"name"`
     }
 
-    //response 200 User "description"
+    //@response 200 User "description"
     ```
 
 2. response struct with array.
 
     ```go
-    //response 200 []User
+    //@response 200 []User
     ```
 
 3. a composition common response.
@@ -171,9 +171,9 @@ deprecated|Mark api as deprecated.|@deprecated
         Data interface{} `json:"data"`
     }
 
-    //response 200 Response{code=10001,msg="some error"} "some error description"
-    //response 200 Response{code=0,data=User} "success description"
-    //response 200 Response{code=0,data=[]User} "success description"
+    //@response 200 Response{code=10001,msg="some error"} "some error description"
+    //@response 200 Response{code=0,data=User} "success description"
+    //@response 200 Response{code=0,data=[]User} "success description"
     ```
 
     if import package of `common.Response`:
@@ -183,7 +183,7 @@ deprecated|Mark api as deprecated.|@deprecated
         "common"
     )
 
-    //response 200 common.Response{code=0,data=User} "success description"
+    //@response 200 common.Response{code=0,data=User} "success description"
     ```
 
 4. example value of struct
@@ -200,7 +200,7 @@ deprecated|Mark api as deprecated.|@deprecated
 1. generate apis mocks files. add `//mock` at the end of `response`, default use first.
 
     ```go
-    //response 200 Response{code=0,data=[]User} "success description" //mock
+    //@response 200 Response{code=0,data=[]User} "success description" //mock
     ```
 
      generate apis mocks files, default generated in the directory `./docs/mocks`.
