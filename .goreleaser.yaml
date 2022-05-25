@@ -1,0 +1,26 @@
+---
+project_name: apidocgen
+
+release:
+  github:
+    owner: alovn
+    name: apidocgen
+
+builds:
+  - main: ./main.go
+    binary: apidocgen
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: linux
+        goarch: arm64
+    ldflags: -X {{.ModulePath}}/cmd.Version={{.Version}} -X {{.ModulePath}}/cmd.GitCommit={{.Commit}} -X {{.ModulePath}}/cmd.BuildDate={{.Date}}
+    env:
+      - CGO_ENABLED=0

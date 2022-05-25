@@ -25,6 +25,7 @@ Usage:
 Available Commands:
   help        Help about any command
   mock        
+  version     print version
 
 Flags:
       --dir string            Search apis dir, comma separated (default ".")
