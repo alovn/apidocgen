@@ -54,7 +54,7 @@ func (m *MockServer) InitFiles(dir string) error {
 		if filepath.Ext(fullPath) != ".mocks" {
 			return nil
 		}
-		bytes, err := os.ReadFile(fullPath)
+		bytes, err := os.ReadFile(filepath.Clean(fullPath))
 		if err != nil {
 			return err
 		}
@@ -79,8 +79,9 @@ func (s *MockServer) mock() {
 		return func(c *bytego.Ctx) error {
 			var mockResponse *MockAPIResponse
 			for _, resp := range api.Responses {
+				resp2 := resp
 				if resp.IsMock {
-					mockResponse = &resp
+					mockResponse = &resp2
 					break
 				}
 			}

@@ -180,7 +180,7 @@ func (g *Gen) buildDocs() error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer f.Close() //#nosec
 		for _, g := range doc.Groups {
 			apis := g.Apis
 			sortApis(apis)
@@ -195,11 +195,11 @@ func (g *Gen) buildDocs() error {
 			group := v
 			sortApis(group.Apis)
 			fileName := fmt.Sprintf("apis-%s.md", group.Group)
-			f, err := os.Create(filepath.Join(g.c.OutputDir, fileName))
+			f, err := os.Create(filepath.Clean(filepath.Join(g.c.OutputDir, fileName)))
 			if err != nil {
 				return err
 			}
-			defer f.Close()
+			defer f.Close() //#nosec
 			if err = t.ExecuteTemplate(f, "group_apis", group); err != nil {
 				return err
 			}
@@ -210,7 +210,7 @@ func (g *Gen) buildDocs() error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer f.Close() //#nosec
 		if err = t.ExecuteTemplate(f, "group_index", doc); err != nil {
 			return err
 		}
@@ -245,7 +245,7 @@ func (g *Gen) buildMocks() error {
 			mapi := mock.MockAPI{
 				Title:      api.Title,
 				HTTPMethod: api.HTTPMethod,
-				Path:       basePath + api.Api,
+				Path:       fmt.Sprintf("%s/%s", strings.TrimSuffix(basePath, "/"), strings.TrimPrefix(api.Api, "/")),
 				Headers: map[string]string{
 					"Content-Type": contentType,
 				},
@@ -272,11 +272,11 @@ func (g *Gen) genMocks() error {
 	}
 	genMockFile := func(name string, bytes []byte) error {
 		mocksFileName := fmt.Sprintf("%s.mocks", strings.ToLower(name))
-		f, err := os.Create(filepath.Join(mocksDir, mocksFileName))
+		f, err := os.Create(filepath.Clean(filepath.Join(mocksDir, mocksFileName)))
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer f.Close() //#nosec
 		if _, err := f.Write(bytes); err != nil {
 			return err
 		}
