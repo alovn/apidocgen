@@ -143,11 +143,21 @@ func (s *TypeSchema) Write(format string, withComment bool) (body string) {
 	switch format {
 	case "json":
 		return s.JSON(withComment)
+	case "jsonp":
+		return s.JSONP(withComment)
 	case "xml":
 		return s.XML(withComment)
 	default:
 		return s.JSON(withComment)
 	}
+}
+
+func (s *TypeSchema) JSONP(withComment bool) string {
+	var sb strings.Builder
+	sb.WriteString("callback(")
+	sb.WriteString(s.JSON(withComment))
+	sb.WriteString(")")
+	return sb.String()
 }
 
 func (s *TypeSchema) JSON(withComment bool) string {
