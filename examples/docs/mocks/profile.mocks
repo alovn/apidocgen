@@ -3,6 +3,7 @@
   "title": "获取用户资料",
   "http_method": "GET",
   "path": "/user/profile/get",
+  "format": "json",
   "headers": {
    "Content-Type": "application/json"
   },

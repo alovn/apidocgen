@@ -3,6 +3,7 @@
   "title": "用户注册接口",
   "http_method": "POST",
   "path": "/user/account/register",
+  "format": "json",
   "headers": {
    "Content-Type": "application/json"
   },
@@ -21,6 +22,7 @@
   "title": "用户登录接口",
   "http_method": "POST",
   "path": "/user/account/login",
+  "format": "json",
   "headers": {
    "Content-Type": "application/json"
   },

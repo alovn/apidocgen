@@ -10,6 +10,7 @@
 5. [map](#5-map)
 6. [xml](#6-xml)
 7. [time](#7-time)
+8. [jsonp](#8-jsonp)
 
 ## apis
 
@@ -221,6 +222,26 @@ __Response__:
   },
   "msg": "success"  //string, 返回消息
 }
+```
+
+---
+
+### 8. jsonp
+
+author: _alovn_
+
+```text
+GET /user/demo/jsonp
+```
+
+__Response__:
+
+```jsonp
+//StatusCode: 200 
+callback({  //object(common.Response), 通用返回结果
+  "code": 0,  //int, 返回状态码
+  "msg": "success"  //string, 返回消息
+})
 ```
 
 ---

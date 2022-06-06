@@ -3,6 +3,7 @@
   "title": "添加地址接口",
   "http_method": "POST",
   "path": "/user/address/create",
+  "format": "json",
   "headers": {
    "Content-Type": "application/json"
   },
@@ -18,6 +19,7 @@
   "title": "更新地址接口",
   "http_method": "POST",
   "path": "/user/address/update",
+  "format": "json",
   "headers": {
    "Content-Type": "application/json"
   },
@@ -33,6 +35,7 @@
   "title": "删除地址接口",
   "http_method": "POST",
   "path": "/user/address/delete",
+  "format": "json",
   "headers": {
    "Content-Type": "application/json"
   },
@@ -48,6 +51,7 @@
   "title": "获取地址信息",
   "http_method": "GET",
   "path": "/user/address/get/:id",
+  "format": "json",
   "headers": {
    "Content-Type": "application/json"
   },
@@ -63,6 +67,7 @@
   "title": "获取地址列表",
   "http_method": "GET",
   "path": "/user/address/list",
+  "format": "json",
   "headers": {
    "Content-Type": "application/json"
   },

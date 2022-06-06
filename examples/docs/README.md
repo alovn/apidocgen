@@ -47,4 +47,6 @@ version: _@1.0.1_
 
     5.7. [time](./apis-demo.md#7-time)
 
+    5.8. [jsonp](./apis-demo.md#8-jsonp)
+
 This page was built using [apidocgen](https://github.com/alovn/apidocgen).

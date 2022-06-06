@@ -3,6 +3,7 @@
   "title": "获取菜单节点",
   "http_method": "GET",
   "path": "/user/menu/nodes",
+  "format": "json",
   "headers": {
    "Content-Type": "application/json"
   },

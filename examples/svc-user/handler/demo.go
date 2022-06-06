@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -137,4 +138,21 @@ func (h *AddressHandler) Time(w http.ResponseWriter, r *http.Request) {
 	res := common.NewResponse(200, "获取成功", address)
 	b, _ := json.Marshal(res)
 	_, _ = w.Write(b)
+}
+
+//@api GET /demo/jsonp
+//@title jsonp
+//@group demo
+//@format jsonp
+//@response 200 common.Response{code=0,msg="success"}
+//@author alovn
+func (h *AddressHandler) Jsonp(w http.ResponseWriter, r *http.Request) {
+	res := common.NewResponse(200, "获取成功", nil)
+	b, _ := json.Marshal(res)
+	callback := r.URL.Query().Get("callback")
+	if callback == "" {
+		callback = "callback"
+	}
+	result := fmt.Sprintf("%s(%s)", callback, string(b))
+	_, _ = w.Write([]byte(result))
 }

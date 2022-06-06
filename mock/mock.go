@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gostack-labs/bytego"
 	"github.com/gostack-labs/bytego/middleware/logger"
@@ -17,6 +18,7 @@ type MockAPI struct {
 	Title      string            `json:"title,omitempty"`
 	HTTPMethod string            `json:"http_method,omitempty"`
 	Path       string            `json:"path,omitempty"`
+	Format     string            `json:"format,omitempty"`
 	Headers    map[string]string `json:"headers,omitempty"`
 	Responses  []MockAPIResponse `json:"response,omitempty"`
 }
@@ -95,7 +97,15 @@ func (s *MockServer) mock() {
 				c.SetHeader(key, value)
 			}
 			c.Status(mockResponse.HTTPCode)
-			if _, err := c.Response.WriteString(mockResponse.Body); err != nil {
+			body := mockResponse.Body
+			if api.Format == "jsonp" {
+				callback := c.Query("callback")
+				callbackPrefix := "callback("
+				if callback != "" && strings.HasPrefix(body, callbackPrefix) {
+					body = fmt.Sprintf("%s(%s", callback, body[len(callbackPrefix):])
+				}
+			}
+			if _, err := c.Response.WriteString(body); err != nil {
 				return err
 			}
 			return nil

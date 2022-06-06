@@ -238,6 +238,8 @@ func (g *Gen) buildMocks() error {
 			switch strings.ToLower(api.Format) {
 			case "xml":
 				contentType = "application/xml"
+			case "jsonp":
+				contentType = "application/javascript"
 			default:
 				contentType = "application/json"
 			}
@@ -249,6 +251,7 @@ func (g *Gen) buildMocks() error {
 				Headers: map[string]string{
 					"Content-Type": contentType,
 				},
+				Format: api.Format,
 			}
 
 			for _, res := range api.Responses {

@@ -27,7 +27,7 @@
             "program": "${workspaceFolder}/main.go",
             "args": [
                 "mock",
-                "--dir", "./docs/mocks",
+                "--data", "./docs/mocks",
                 "--listen", "localhost:8001"
             ]
         },
