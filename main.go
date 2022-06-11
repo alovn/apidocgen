@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 alovn <alovn@live.com>
+Copyright © 2022 alovn
 
 */
 package main

@@ -1,18 +1,16 @@
 # apidocgen
 
-[![Build Status](https://github.com/alovn/apidocgen/actions/workflows/release.yaml/badge.svg)](https://github.com/alovn/apidocgen/actions/workflows/release.yaml)
+[English](./README.md) | 简体中文
 
-English | [简体中文](./README-zh.md)
+apidocgen 是一个为Go项目生成api文档(makrdown格式)和mock的工具。
 
-apidocgen is a tool for Go to generate apis markdown docs and mocks.
-
-## Install
+## 安装
 
 ```bash
 go install github.com/alovn/apidocgen@latest
 ```
 
-## Cli
+## 命令
 
 ```bash
 $ apidocgen --help
@@ -46,13 +44,13 @@ Flags:
 Use "apidocgen [command] --help" for more information about a command.
 ```
 
-## Template
+## 模板
 
-The built-in templates include `markdown` and `apidocs`, default is `markdown`.
+模板用于生成文档，内置的模板名称有 `markdown` 和 `apidocs`, 默认是 `markdown`.
 
-The template `apidocs` is the template for generate website [apidocs](https://github.com/alovn/apidocs).
+其中 `apidocs` 模板是用于 [apidocs](https://github.com/alovn/apidocs) 这个项目中显示的。
 
-You can also use the custom template:
+也可以使用自己的模板文件:
 
 ```bash
 apidocgen \
@@ -61,11 +59,11 @@ apidocgen \
     --output=./docs
 ```
 
-## How to use
+## 怎样使用
 
-apidocgen supported any web frameworks. here are an example using [bytego](https://github.com/gostack-labs/bytego).
+apidocgen 支持Go语言下所有的web框架. 下面是一个 [bytego](https://github.com/gostack-labs/bytego) 框架的示例.
 
-1. Add API annotations in main.go code:
+1. 在`main.go`文件中添加注解(注释):
 
     ```go
     //@title UserService
@@ -88,7 +86,7 @@ apidocgen supported any web frameworks. here are an example using [bytego](https
     }
     ```
 
-2. Add API annotations in httpHandler.
+2. 为API添加注解.
 
     ```go
     //@title AccountLogin
@@ -109,48 +107,50 @@ apidocgen supported any web frameworks. here are an example using [bytego](https
     }
     ```
 
-3. Execute `apidocgen`.
+3. 执行 `apidocgen`.
 
     ```bash
     apidocgen
     ```
 
-    The markdown files will be generated in `./docs`.
+    执行后，markdown格式的文档将默认生成在 `./docs` 目录下.
 
-## Examples
+## 示例
 
-Some examples and generated markdown docs are here: [apidocgen/examples](https://github.com/alovn/apidocgen/tree/main/examples).
+更完整的示例在这里: [apidocgen/examples](https://github.com/alovn/apidocgen/tree/main/examples).
 
-An online generated api docs site: [https://apidocgen.netlify.app/](https://apidocgen.netlify.app/)
+这是一个用`apidocs`模板生成的在线浏览的网站模板示例: [https://apidocgen.netlify.app/](https://apidocgen.netlify.app/)
 
-## Comments(annotations)
+## 注解(注释)
+
+目前支持的注解有下面这些：
 
 annotation|description|example
 --|--|--
-service|Required, the service's identification|@service svc-user
-baseurl|The base url of api|@baseurl /
-group|The group of service, add it at api comment or at the head of file comment.|@group account
-title|The title of service, group and api|@title UserService
-desc|The description of service, group and api|@desc xxx
-api|The http api handler|@api POST /account/register
-order|Sort groups and apis|@order 1
-author|The author of api|@author alovn
-version|The version of service or api|@version 1.0.1
-accept|The request format, support json/xml|@accept json
-format|The response format, support json/xml|@format json
-request|The request body|@request LoginRequest
-response|The response body, [http code] [data type]|@response 200 LoginResponse
-success|As same as response|@success 200 LoginResponse
-failure|As same as response|@failure 200 LoginResponse
-param|The path parameter of router `/user/:id`, parameters separated by spaces [name] [type] [required] [comment],|@param id int true "user_id"
-query|The query parameter of route, `/user?id=`, parameters same as @param|@query id int true "user_id"
-header|The request HTTP header parameter, parameters same as @param|@header X-Request-ID string false "request id"
-form|The form parameter of request, parameters same as @param|@form id int true "user_id"
-deprecated|Mark api as deprecated.|@deprecated
+service|Required, api服务标识|@service svc-user
+baseurl|所有api的url前缀|@baseurl /
+group|api的分组, 可以添加到api的注释上，或添加到文件头部的注释(该文件中所有的api都会添加到该分组下,api中可省略该注解).|@group account
+title|service、group、api的标题|@title UserService
+desc|service、group、api的详细描述信息|@desc xxx
+api|api的标识|@api POST /account/register
+order|group、api的排序(从小到大)|@order 1
+author|api的作者(维护者)|@author alovn
+version|service、api的版本号|@version 1.0.1
+accept|reuest请求的数据格式, 支持 json、xml|@accept json
+format|response输出的数据格式, 支持 json/xml|@format json
+request|request请求对象|@request LoginRequest
+response|response输出对象。 [http code] [data type]|@response 200 LoginResponse
+success|同@response|@success 200 LoginResponse
+failure|同@response|@failure 200 LoginResponse
+param|URL中的path路由参数 `/user/:id`。参数由空格分割 [name] [type] [required] [comment],|@param id int true "user_id"
+query|URL中的query请求参数, `/user?id=`,格式同 @param|@query id int true "user_id"
+header|header请求参数, 格式同 @param|@header X-Request-ID string false "request id"
+form|The form parameter of request, 格式同 @param|@form id int true "user_id"
+deprecated|标记api过期.|@deprecated
 
 ## Response
 
-1. response user defined struct.
+1. 输出自定义的结构体.
 
     ```go
     type User struct {
@@ -161,13 +161,13 @@ deprecated|Mark api as deprecated.|@deprecated
     //@response 200 User "description"
     ```
 
-2. response struct with array.
+2. 输出结构体的数组.
 
     ```go
     //@response 200 []User
     ```
 
-3. a composition common response.
+3. 输出一个结构体，并替换结构体的字段.
 
     ```go
     type Response struct {
@@ -181,7 +181,7 @@ deprecated|Mark api as deprecated.|@deprecated
     //@response 200 Response{code=0,data=[]User} "success description"
     ```
 
-    if import package of `common.Response`:
+    如果 Response 结构体是在common包中, 就要使用 `common.Response`:
 
     ```go
     import (
@@ -191,7 +191,7 @@ deprecated|Mark api as deprecated.|@deprecated
     //@response 200 common.Response{code=0,data=User} "success description"
     ```
 
-4. example value of struct
+4. 添加example tag, 为结构体输出示例值。
 
     ```go
     type User struct {
@@ -202,31 +202,31 @@ deprecated|Mark api as deprecated.|@deprecated
 
 ## Mock
 
-1. generate apis mocks files. add `//mock` at the end of `response`, default use first.
+1. 为api生成mock文件. 在 api 的 `@response` 注解后添加 `//mock` 注释`，如果没有则默认使用第一个.
 
     ```go
     //@response 200 Response{code=0,data=[]User} "success description" //mock
     ```
 
-     generate apis mocks files, default generated in the directory `./docs/mocks`.
+    执行以下命令生成mock数据文件，默认生成的在 `./docs/mocks` 目录下.
 
     ```bash
     apidocgen --dir=common,svc-user --gen-mocks
     ```
 
-2. serve the mock server from generated mock files.
+2. 使用生成的mock数据，启动一个mock server.
 
     ```bash
     apidocgen mock --data=./mocks --listen=:8001
     ```
 
-3. serve the mock server from source code (dot't generate mock files).
+3. 也可以不生成mock数据文件，直接启动一个mock server.
 
     ```bash
     apidocgen --dir=common,svc-user --mock --mock-listen=:8001
     ```
 
-4. request mock server using `curl` client.
+4. 测试、使用mock server
 
     ```bash
     $ curl -X POST -d "" localhost:8001/user/account/login   
