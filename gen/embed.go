@@ -2,7 +2,6 @@ package gen
 
 import (
 	"embed"
-	_ "embed"
 )
 
 //go:embed template/*

@@ -62,23 +62,24 @@ func TestOperation_ParseMatchResponseComment(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		x := tt
 		t.Run(tt.name, func(t *testing.T) {
-			matches := responsePattern.FindStringSubmatch(tt.commentLine)
+			matches := responsePattern.FindStringSubmatch(x.commentLine)
 			matchesLen := len(matches)
-			if matchesLen != tt.wantLen {
+			if matchesLen != x.wantLen {
 				// for _, m := range matches {
 				// 	fmt.Println(m)
 				// }
 
-				t.Errorf("%s len(matches) = %v, wantLen %v, matches = %v", t.Name(), matchesLen, tt.wantLen, matches)
+				t.Errorf("%s len(matches) = %v, wantLen %v, matches = %v", t.Name(), matchesLen, x.wantLen, matches)
 			}
 			for i, m := range matches {
 				if i == 0 {
 					continue
 				}
 				index := i - 1
-				if m != tt.matches[index] {
-					t.Errorf("%s match = %v, want = %v", t.Name(), m, tt.matches[index])
+				if m != x.matches[index] {
+					t.Errorf("%s match = %v, want = %v", t.Name(), m, x.matches[index])
 				}
 			}
 		})

@@ -42,7 +42,7 @@ type TemplateConfig struct {
 }
 
 func New(c *Config) *Gen {
-	var defaultTemplateName = "markdown"
+	defaultTemplateName := "markdown"
 	if c.TemplateDir == "" {
 		c.TemplateDir = defaultTemplateName
 	}
@@ -62,7 +62,7 @@ func (g *Gen) Build() error {
 			return fmt.Errorf("error: dir %s does not exist", searchDir)
 		}
 	}
-	//parser
+	// parser
 	g.parser = parser.New()
 	parser.SetExcludedDirsAndFiles(g.c.ExcludesDir)(g.parser)
 	if err := g.parser.Parse(g.searchDirs); err != nil {
@@ -95,7 +95,7 @@ func (g *Gen) Build() error {
 		}
 	}
 	if g.c.IsMockServer {
-		mockServer := mock.New(g.c.MockServerListen)
+		mockServer := mock.NewMockServer(g.c.MockServerListen)
 		for _, mockApis := range g.mockApis {
 			mockServer.InitMockApis(mockApis)
 		}
@@ -106,7 +106,7 @@ func (g *Gen) Build() error {
 
 func (g *Gen) buildDocs() error {
 	var err error
-	if strings.ContainsAny(g.c.TemplateDir, "/\\") { //custom dir
+	if strings.ContainsAny(g.c.TemplateDir, "/\\") { // custom dir
 		g.templateFS = os.DirFS(g.c.TemplateDir)
 	} else {
 		g.c.TemplateDir = fmt.Sprintf("template/%s", g.c.TemplateDir)
@@ -132,8 +132,8 @@ func (g *Gen) buildDocs() error {
 	doc := g.parser.GetApiDoc()
 
 	g.c.OutputIndexName = strings.ReplaceAll(g.c.OutputIndexName, "@{service}", doc.Service)
-	if strings.ContainsAny(g.c.OutputIndexName, "/\\") { //custom dir
-		return fmt.Errorf("error: output-index can't be a directory: %s.", g.c.OutputIndexName)
+	if strings.ContainsAny(g.c.OutputIndexName, "/\\") { // custom dir
+		return fmt.Errorf("error: output-index can't be a directory: %s", g.c.OutputIndexName)
 	}
 
 	if len(doc.UngroupedApis) > 0 {
@@ -175,12 +175,14 @@ func (g *Gen) buildDocs() error {
 	if err != nil {
 		return err
 	}
+
 	if g.c.IsGenSingleFile {
 		f, err := os.Create(filepath.Join(g.c.OutputDir, g.c.OutputIndexName))
 		if err != nil {
 			return err
 		}
 		defer f.Close() //#nosec
+
 		for _, g := range doc.Groups {
 			apis := g.Apis
 			sortApis(apis)
@@ -190,7 +192,7 @@ func (g *Gen) buildDocs() error {
 		}
 		fmt.Println("generated: ", g.c.OutputIndexName)
 	} else {
-		//group
+		// group
 		for _, v := range doc.Groups {
 			group := v
 			sortApis(group.Apis)
@@ -205,7 +207,7 @@ func (g *Gen) buildDocs() error {
 			}
 			fmt.Println("Generated:", fileName)
 		}
-		//readme
+		// readme
 		f, err := os.Create(filepath.Join(g.c.OutputDir, g.c.OutputIndexName))
 		if err != nil {
 			return err
@@ -222,19 +224,24 @@ func (g *Gen) buildDocs() error {
 
 func (g *Gen) buildMocks() error {
 	doc := g.parser.GetApiDoc()
+
 	var basePath string
+
 	if doc.BaseURL != "" {
 		u, err := url.Parse(doc.BaseURL)
 		if err != nil {
 			return err
 		}
+
 		basePath = u.Path
 	}
 
 	for _, group := range doc.Groups {
 		var mockApis []mock.MockAPI
+
 		for _, api := range group.Apis {
 			var contentType string
+
 			switch strings.ToLower(api.Format) {
 			case "xml":
 				contentType = "application/xml"
@@ -261,6 +268,7 @@ func (g *Gen) buildMocks() error {
 					IsMock:   res.IsMock || len(api.Responses) == 1,
 				})
 			}
+
 			mockApis = append(mockApis, mapi)
 		}
 		g.mockApis[group.Group] = mockApis
@@ -300,14 +308,14 @@ func (g *Gen) genMocks() error {
 
 func (g *Gen) readTemplate(name string) (s string, err error) {
 	var bs []byte
+
 	if g.templateFS == nil {
 		err = errors.New("error: templateFS nil")
 		return
 	}
 	if bs, err = fs.ReadFile(g.templateFS, name); err != nil {
 		return
-	} else {
-		s = string(bs)
-		return
 	}
+	s = string(bs)
+	return
 }

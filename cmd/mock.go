@@ -23,7 +23,7 @@ var mockCmd = &cobra.Command{
 
 apidocgen mock --data=./docs/mocks --listen=localhost:8001`,
 	Run: func(cmd *cobra.Command, args []string) {
-		mockServer := mock.New(mockListen)
+		mockServer := mock.NewMockServer(mockListen)
 		if err := mockServer.InitFiles(mockDataDir); err != nil {
 			log.Fatal(err)
 		}

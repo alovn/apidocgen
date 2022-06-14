@@ -12,7 +12,7 @@ import (
 
 var (
 	// Version version
-	Version string = "0.1.0"
+	Version = "0.1.0"
 	// BuildDate build date
 	BuildDate string
 	// GitCommit

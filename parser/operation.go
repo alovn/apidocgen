@@ -116,7 +116,7 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 
 func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast.File) error {
 	matches := requestPattern.FindStringSubmatch(commentLine)
-	//0 Request 1 Request 2 Comment
+	// 0 Request 1 Request 2 Comment
 	if len(matches) != 3 {
 		return nil
 	}
@@ -135,7 +135,9 @@ func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast
 		operation.Requests = ApiRequestSpec{
 			Parameters: map[string]*ApiParameterSpec{},
 		}
-		var parameterCount = 0
+
+		parameterCount := 0
+
 		for _, p := range schema.Properties {
 			tags := p.ParameterTags()
 			if tags != nil {
@@ -169,9 +171,9 @@ func (operation *Operation) ParseRequestComment(commentLine string, astFile *ast
 	}
 }
 
-//ParseParametersComment parses parameters (@header, @param, @query, @form)
-//@param [name] [type] [required] [comment]
-//@query demo int true "测试参数"
+// ParseParametersComment parses parameters (@header, @param, @query, @form)
+// @param [name] [type] [required] [comment]
+// @query demo int true "测试参数"
 func (operation *Operation) ParseParametersComment(parameterType, commentLine string, astFile *ast.File) error {
 	matches := paramPattern.FindStringSubmatch(commentLine)
 	if len(matches) != 5 {
@@ -205,15 +207,15 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	if len(matches) != 4 && len(matches) != 3 {
 		return nil
 	}
-	//200 Response{data=TestData}
+	// 200 Response{data=TestData}
 	description := strings.Trim(matches[3], "\"")
 	codeStr := matches[1]
 	code, err := strconv.Atoi(codeStr)
 	if err != nil {
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
-	refType := matches[2] //Response{data=TestData}
-	//object
+	refType := matches[2] // Response{data=TestData}
+	// object
 	schema, err := operation.parseObject(refType, astFile)
 	if err != nil {
 		return err
@@ -237,7 +239,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 func (operation *Operation) parseObject(refType string, astFile *ast.File) (*TypeSchema, error) {
 	arrayFlag := "[]"
 	isArray := strings.HasPrefix(refType, arrayFlag)
-	if isArray { //array
+	if isArray { // array
 		typeName := strings.TrimPrefix(refType, arrayFlag)
 		schema, err := operation.parseObject(typeName, astFile)
 		if err != nil {
@@ -275,16 +277,16 @@ func (operation *Operation) parseCombinedObject(refType string, astFile *ast.Fil
 		if len(keyVal) == 2 {
 			// fmt.Println("keyVal", keyVal[0], keyVal[1]) //data TestData
 			// if is number or string wrap, replace it
-			if isReplaceValue(keyVal[1]) { //replace int,string, examples code or msg
+			if isReplaceValue(keyVal[1]) { // replace int,string, examples code or msg
 				if p, ok := schemaA.Properties[strings.ToLower(keyVal[0])]; ok {
-					p.example = keyVal[1] //replace response code, msg
+					p.example = keyVal[1] // replace response code, msg
 				}
 			} else {
-				//check is array
+				// check is array
 				arrayFlag := "[]"
 				typeName := keyVal[1]
 				isArray := strings.HasPrefix(typeName, arrayFlag)
-				if isArray { //array
+				if isArray { // array
 					typeName = strings.TrimPrefix(typeName, arrayFlag)
 				}
 				schema, err := operation.parseObject(typeName, astFile)
@@ -292,7 +294,7 @@ func (operation *Operation) parseCombinedObject(refType string, astFile *ast.Fil
 					return nil, err
 				}
 				key := strings.ToLower(keyVal[0])
-				if old, ok := schemaA.Properties[key]; ok { //xml tag replace
+				if old, ok := schemaA.Properties[key]; ok { // xml tag replace
 					xmlTag, hasTag, isAttr, _, isInner := old.XMLTag()
 					if _, has2 := schema.hasXMLName(); !has2 {
 						if hasTag && !isAttr && !isInner {
@@ -316,10 +318,9 @@ func (operation *Operation) parseCombinedObject(refType string, astFile *ast.Fil
 					if old, ok := schemaA.Properties[key]; ok {
 						schema.TagValue = old.TagValue // use old tag, for example Response.data
 					}
-					schemaA.Properties[key] = schema //data=xx
+					schemaA.Properties[key] = schema // data=xx
 				}
 			}
-
 		}
 	}
 	return schemaA, nil

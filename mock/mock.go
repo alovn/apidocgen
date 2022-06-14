@@ -35,19 +35,21 @@ type MockServer struct {
 	mockApis []MockAPI
 }
 
-func New(addr string) *MockServer {
+func NewMockServer(addr string) *MockServer {
 	if addr == "" {
 		addr = "localhost:8001"
 	}
+
 	app := bytego.New()
 	app.Use(recovery.New(), logger.New())
+
 	return &MockServer{
 		app:  app,
 		addr: addr,
 	}
 }
 
-func (m *MockServer) InitFiles(dir string) error {
+func (s *MockServer) InitFiles(dir string) error {
 	return fs.WalkDir(os.DirFS(dir), ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -62,60 +64,62 @@ func (m *MockServer) InitFiles(dir string) error {
 		}
 		var mockApis []MockAPI
 		if err = json.Unmarshal(bytes, &mockApis); err != nil {
-			return fmt.Errorf("error file %s: %v", fullPath, err)
+			return fmt.Errorf("error file %s: %w", fullPath, err)
 		}
 		if len(mockApis) > 0 {
-			m.mockApis = append(m.mockApis, mockApis...)
+			s.mockApis = append(s.mockApis, mockApis...)
 		}
 		return nil
 	})
 }
 
-func (m *MockServer) InitMockApis(mockApis []MockAPI) {
-	m.mockApis = append(m.mockApis, mockApis...)
+func (s *MockServer) InitMockApis(mockApis []MockAPI) {
+	s.mockApis = append(s.mockApis, mockApis...)
+}
+
+func (s *MockServer) handler(api MockAPI) bytego.HandlerFunc {
+	return func(c *bytego.Ctx) error {
+		var mockResponse *MockAPIResponse
+		for _, resp := range api.Responses {
+			resp2 := resp
+			if resp.IsMock {
+				mockResponse = &resp2
+				break
+			}
+		}
+		if mockResponse == nil && len(api.Responses) > 0 {
+			mockResponse = &api.Responses[0]
+		}
+		if mockResponse == nil {
+			return c.String(http.StatusNoContent, "no mock response")
+		}
+		for key, value := range api.Headers {
+			c.SetHeader(key, value)
+		}
+
+		c.Status(mockResponse.HTTPCode)
+		body := mockResponse.Body
+		if api.Format == "jsonp" {
+			callback := c.Query("callback")
+			callbackPrefix := "callback("
+			if callback != "" && strings.HasPrefix(body, callbackPrefix) {
+				body = fmt.Sprintf("%s(%s", callback, body[len(callbackPrefix):])
+			}
+		}
+		if _, err := c.Response.WriteString(body); err != nil {
+			return err
+		}
+		return nil
+	}
 }
 
 func (s *MockServer) mock() {
 	fmt.Println("Mock apis count:", len(s.mockApis))
-	handler := func(api MockAPI) bytego.HandlerFunc {
-		return func(c *bytego.Ctx) error {
-			var mockResponse *MockAPIResponse
-			for _, resp := range api.Responses {
-				resp2 := resp
-				if resp.IsMock {
-					mockResponse = &resp2
-					break
-				}
-			}
-			if mockResponse == nil && len(api.Responses) > 0 {
-				mockResponse = &api.Responses[0]
-			}
-			if mockResponse == nil {
-				return c.String(http.StatusNoContent, "no mock response")
-			}
-			for key, value := range api.Headers {
-				c.SetHeader(key, value)
-			}
-			c.Status(mockResponse.HTTPCode)
-			body := mockResponse.Body
-			if api.Format == "jsonp" {
-				callback := c.Query("callback")
-				callbackPrefix := "callback("
-				if callback != "" && strings.HasPrefix(body, callbackPrefix) {
-					body = fmt.Sprintf("%s(%s", callback, body[len(callbackPrefix):])
-				}
-			}
-			if _, err := c.Response.WriteString(body); err != nil {
-				return err
-			}
-			return nil
-		}
-	}
 	for _, api := range s.mockApis {
 		if api.HTTPMethod == "ANY" {
-			s.app.Any(api.Path, handler(api))
+			s.app.Any(api.Path, s.handler(api))
 		} else {
-			s.app.Handle(api.HTTPMethod, api.Path, handler(api))
+			s.app.Handle(api.HTTPMethod, api.Path, s.handler(api))
 		}
 	}
 }

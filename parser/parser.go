@@ -34,9 +34,9 @@ const (
 	formatAttr      = "@format"
 	deprecatedAttr  = "@deprecated"
 	authorAttr      = "@author"
-	orderAttr       = "@order" //for sort
+	orderAttr       = "@order" // for sort
 
-	//doc
+	// doc
 	baseURLAttr = "@baseurl"
 )
 
@@ -105,7 +105,7 @@ func (p *Parser) GetApiDoc() *ApiDocSpec {
 }
 
 func (p *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
-	//parse group
+	// parse group
 	var fileGroup string
 	comments := strings.Split(astFile.Doc.Text(), "\n")
 	if len(comments) > 0 {
@@ -136,7 +136,7 @@ func (p *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 		case *ast.FuncDecl:
 			if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
 				comments := strings.Split(astDeclaration.Doc.Text(), "\n")
-				if astDeclaration.Name.Name == "main" { //parse service
+				if astDeclaration.Name.Name == "main" { // parse service
 					if isApiDocComment(comments) {
 						if err := p.parseApiDocInfo(comments); err != nil {
 							return err
@@ -144,7 +144,7 @@ func (p *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 						continue
 					}
 				}
-				if isApiGroupComment(comments) { //parse group, if in func decl
+				if isApiGroupComment(comments) { // parse group, if in func decl
 					if err := p.parseApiGroupInfo(comments); err != nil {
 						return err
 					}
@@ -155,16 +155,16 @@ func (p *Parser) parseApiInfos(fileName string, astFile *ast.File) error {
 					continue
 				}
 
-				//parse apis
+				// parse apis
 				operation := NewOperation(p)
 				for _, comment := range comments {
 					err := operation.ParseComment(comment, astFile)
 					if err != nil {
-						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
+						return fmt.Errorf("ParseComment error in file %s :%w", fileName, err)
 					}
 				}
-				operation.ApiSpec.doc = p.doc                         //ptr, for build full url
-				if operation.ApiSpec.Group == "" && fileGroup != "" { //use file group
+				operation.ApiSpec.doc = p.doc                         // ptr, for build full url
+				if operation.ApiSpec.Group == "" && fileGroup != "" { // use file group
 					operation.ApiSpec.Group = fileGroup
 				}
 				if operation.ApiSpec.Group == "" {
@@ -292,7 +292,8 @@ func isApiGroupComment(comments []string) bool {
 }
 
 func isApiComment(comments []string) bool {
-	isApi := false
+	isAPI := false
+
 	for _, commentLine := range comments {
 		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 		switch attribute {
@@ -300,7 +301,7 @@ func isApiComment(comments []string) bool {
 			return true
 		}
 	}
-	return isApi
+	return isAPI
 }
 
 func getPkgName(searchDir string) (string, error) {
@@ -313,7 +314,7 @@ func getPkgName(searchDir string) (string, error) {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("execute go list command, %s, stdout:%s, stderr:%s", err, stdout.String(), stderr.String())
+		return "", fmt.Errorf("execute go list command error: %w, stdout:%s, stderr:%s", err, stdout.String(), stderr.String())
 	}
 
 	outStr, _ := stdout.String(), stderr.String()
@@ -358,7 +359,7 @@ func (p *Parser) parseFile(packageDir, path string, src interface{}) error {
 	// positions are relative to FileSet
 	astFile, err := goparser.ParseFile(token.NewFileSet(), path, src, goparser.ParseComments)
 	if err != nil {
-		return fmt.Errorf("ParseFile error:%+v", err)
+		return fmt.Errorf("ParseFile error:%w", err)
 	}
 
 	err = p.packages.CollectAstFile(packageDir, path, astFile)
@@ -401,7 +402,7 @@ func fullTypeName(pkgName, typeName string) string {
 
 func (p *Parser) getTypeSchema(typeName string, file *ast.File, parentSchema *TypeSchema) (*TypeSchema, error) {
 	if IsGolangPrimitiveType(typeName) {
-		return &TypeSchema{ //root type
+		return &TypeSchema{ // root type
 			Name:     typeName,
 			FullName: typeName,
 			Type:     typeName,
@@ -452,7 +453,7 @@ func (p *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, parentSchema *TypeSch
 	case *ast.MapType:
 		if keyIdent, ok := expr.Key.(*ast.Ident); ok {
 			if IsGolangPrimitiveType(keyIdent.Name) {
-				example := strings.Trim(getFieldExample(keyIdent.Name, nil), "\"") //map key example
+				example := strings.Trim(getFieldExample(keyIdent.Name, nil), "\"") // map key example
 				mapSchema := &TypeSchema{
 					Type:       OBJECT,
 					Properties: map[string]*TypeSchema{},
@@ -520,7 +521,7 @@ func (p *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, parentSchema *
 	case *ast.MapType:
 		if keyIdent, ok := expr.Key.(*ast.Ident); ok {
 			if IsGolangPrimitiveType(keyIdent.Name) {
-				example := strings.Trim(getFieldExample(keyIdent.Name, nil), "\"") //map key example
+				example := strings.Trim(getFieldExample(keyIdent.Name, nil), "\"") // map key example
 				mapSchema := &TypeSchema{
 					Type:       OBJECT,
 					Properties: map[string]*TypeSchema{},
@@ -585,9 +586,9 @@ func (p *Parser) parseStruct(typeSpecDef *TypeSpecDef, file *ast.File, fields *a
 		}
 		schema.TagValue = getAllTagValue(field)
 		schema.Comment = strings.TrimSuffix(field.Comment.Text(), "\n")
-		if field.Names == nil { //nested struct, replace with child properties
+		if field.Names == nil { // nested struct, replace with child properties
 			for _, p := range schema.Properties {
-				if _, ok := structSchema.Properties[strings.ToLower(p.Name)]; !ok { //if not exists key
+				if _, ok := structSchema.Properties[strings.ToLower(p.Name)]; !ok { // if not exists key
 					structSchema.Properties[strings.ToLower(p.Name)] = p
 				}
 			}
