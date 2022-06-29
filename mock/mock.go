@@ -29,13 +29,13 @@ type MockAPIResponse struct {
 	Body     string `json:"body,omitempty"`
 }
 
-type MockServer struct {
-	app      *bytego.App
-	addr     string
-	mockApis []MockAPI
+type MockServer interface {
+	InitFiles(dir string) error
+	InitMockApis(mockApis []MockAPI)
+	Serve() error
 }
 
-func NewMockServer(addr string) *MockServer {
+func NewMockServer(addr string) MockServer {
 	if addr == "" {
 		addr = "localhost:8001"
 	}
@@ -43,13 +43,19 @@ func NewMockServer(addr string) *MockServer {
 	app := bytego.New()
 	app.Use(recovery.New(), logger.New())
 
-	return &MockServer{
+	return &mockServer{
 		app:  app,
 		addr: addr,
 	}
 }
 
-func (s *MockServer) InitFiles(dir string) error {
+type mockServer struct {
+	app      *bytego.App
+	addr     string
+	mockApis []MockAPI
+}
+
+func (s *mockServer) InitFiles(dir string) error {
 	return fs.WalkDir(os.DirFS(dir), ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -73,11 +79,17 @@ func (s *MockServer) InitFiles(dir string) error {
 	})
 }
 
-func (s *MockServer) InitMockApis(mockApis []MockAPI) {
+func (s *mockServer) InitMockApis(mockApis []MockAPI) {
 	s.mockApis = append(s.mockApis, mockApis...)
 }
 
-func (s *MockServer) handler(api MockAPI) bytego.HandlerFunc {
+func (s *mockServer) Serve() error {
+	s.mock()
+	fmt.Println("Mock server listen:", s.addr)
+	return s.app.Run(s.addr)
+}
+
+func (s *mockServer) handler(api MockAPI) bytego.HandlerFunc {
 	return func(c *bytego.Ctx) error {
 		var mockResponse *MockAPIResponse
 		for _, resp := range api.Responses {
@@ -113,7 +125,7 @@ func (s *MockServer) handler(api MockAPI) bytego.HandlerFunc {
 	}
 }
 
-func (s *MockServer) mock() {
+func (s *mockServer) mock() {
 	fmt.Println("Mock apis count:", len(s.mockApis))
 	for _, api := range s.mockApis {
 		if api.HTTPMethod == "ANY" {
@@ -122,10 +134,4 @@ func (s *MockServer) mock() {
 			s.app.Handle(api.HTTPMethod, api.Path, s.handler(api))
 		}
 	}
-}
-
-func (s *MockServer) Serve() error {
-	s.mock()
-	fmt.Println("Mock server listen:", s.addr)
-	return s.app.Run(s.addr)
 }
